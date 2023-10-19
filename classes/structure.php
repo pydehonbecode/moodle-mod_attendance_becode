@@ -703,6 +703,7 @@ class mod_attendance_structure {
         $record->timetaken = $now;
         $record->takenby = $USER->id;
         $record->ipaddress = getremoteaddr(null);
+        $record->location = $mformdata->location;
 
         $existingattendance = $DB->get_field('attendance_log', 'id',
                             array('sessionid' => $mformdata->sessid, 'studentid' => $USER->id));
@@ -713,9 +714,12 @@ class mod_attendance_structure {
                 return false;
             } else {
                 $record->id = $existingattendance;
+                $record->timetaken = $now;
                 $DB->update_record('attendance_log', $record);
             }
         } else {
+            $record->checkin_time = $now;
+            $record->timetaken = $now;
             $logid = $DB->insert_record('attendance_log', $record);
             $record->id = $logid;
         }

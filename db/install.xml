@@ -77,6 +77,8 @@
         <FIELD NAME="takenby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="remarks" TYPE="char" LENGTH="1333" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="ipaddress" TYPE="char" LENGTH="45" NOTNULL="false" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="checkin_time" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp when the student checked in"/>
+        <FIELD NAME="location" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="Location where the student checked in"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for attendance_log"/>

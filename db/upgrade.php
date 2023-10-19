@@ -34,7 +34,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
 
     global $DB, $CFG;
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
-
+    
     if ($oldversion < 2014112000) {
         $table = new xmldb_table('attendance_sessions');
 
@@ -804,6 +804,21 @@ function xmldb_attendance_upgrade($oldversion=0) {
 
         // Attendance savepoint reached.
         upgrade_mod_savepoint(true, 2023032800, 'attendance');
+    }
+
+    if ($oldversion < 202310180000) {
+        // Define field checkin_time to be added to attendance_log
+        $table = new xmldb_table('attendance_log');
+        $field = new xmldb_field('checkin_time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timetaken');
+        $field = new xmldb_field('location', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, '', 'location');
+
+        // Conditionally launch add field checkin_time
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // attendance savepoint reached
+        upgrade_mod_savepoint(true, [new_version_number], 'attendance');
     }
 
     return true;

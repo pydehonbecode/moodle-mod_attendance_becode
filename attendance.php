@@ -25,6 +25,7 @@
 require_once(dirname(__FILE__).'/../../config.php');
 require_once(dirname(__FILE__).'/locallib.php');
 require_once($CFG->libdir.'/formslib.php');
+require_once(dirname(__FILE__).'/studentlocation_form.php');
 
 $pageparams = new mod_attendance_sessions_page_params();
 
@@ -121,25 +122,7 @@ if (empty($attforsession->includeqrcode)) {
     $qrpass = ''; // Override qrpass if set, as it is not allowed.
 }
 
-// Check to see if autoassignstatus is in use and no password required or Qrpass given and passed.
-if ($attforsession->autoassignstatus && attendance_session_open_for_students($attforsession) && (empty($attforsession->studentpassword)) || $qrpassflag) {
-    $statusid = attendance_session_get_highest_status($att, $attforsession);
-    $url = new moodle_url('/mod/attendance/view.php', array('id' => $cm->id));
-    if (empty($statusid)) {
-        throw new moodle_exception('attendance_no_status', 'mod_attendance', $url);
-    }
-    $take = new stdClass();
-    $take->status = $statusid;
-    $take->sessid = $attforsession->id;
-    $success = $att->take_from_student($take);
-
-    if ($success) {
-        // Redirect back to the view page.
-        redirect($url, get_string('studentmarked', 'attendance'));
-    } else {
-        throw new moodle_exception('attendance_already_submitted', 'mod_attendance', $url);
-    }
-}
+// Check to see if autoassignstatus is in use and no password required or Qrpass given and passed
 
 if (!empty($qrpass) && !empty($attforsession->autoassignstatus) && attendance_session_open_for_students($attforsession)) {
     $fromform = new stdClass();
@@ -230,6 +213,33 @@ if ($mform->is_cancelled()) {
     // The form did not validate correctly so we will set it to display the data they submitted.
     $mform->set_data($fromform);
 }
+
+if ($attforsession->autoassignstatus && attendance_session_open_for_students($attforsession) && (empty($attforsession->studentpassword)) || $qrpassflag) {
+    $mform = new \mod_attendance\form\studentlocation(null,array('course' => $course, 'cm' => $cm, 'modcontext' => $PAGE->context, 'session' => $attforsession,'attendance' => $att, 'password' => $qrpass));
+
+    // Check if the form is submitted
+    if ($mform->is_submitted()) {
+        $data = $mform->get_data();
+        $statusid = attendance_session_get_highest_status($att, $attforsession);
+        $url = new moodle_url('/mod/attendance/view.php', array('id' => $cm->id));
+        if (empty($statusid)) {
+            throw new moodle_exception('attendance_no_status', 'mod_attendance', $url);
+        }
+        $take = new stdClass();
+        $take->status = $statusid;
+        $take->sessid = $attforsession->id;
+        $take->location = $data->location; // Retrieve the location value from the form
+
+        $success = $att->take_from_student($take);
+
+        if ($success) {
+            // Redirect back to the view page.
+            redirect($url, get_string('studentmarked', 'attendance'));
+        } else {
+            throw new moodle_exception('attendance_already_submitted', 'mod_attendance', $url);
+        }
+    }
+} 
 
 $PAGE->set_title($course->shortname. ": ".$att->name);
 $PAGE->set_heading($course->fullname);

@@ -34,6 +34,7 @@ $id             = required_param('id', PARAM_INT);
 $cm             = get_coursemodule_from_id('attendance', $id, 0, false, MUST_EXIST);
 $course         = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 $att            = $DB->get_record('attendance', array('id' => $cm->instance), '*', MUST_EXIST);
+$logs           = $DB->get_records('attendance_log');
 
 require_login($course, true, $cm);
 
@@ -78,8 +79,12 @@ if ($formdata = $mform->get_data()) {
         $pageparams->userids = $formdata->users;
     }
     $att->pageparams = $pageparams;
+    
 
     $reportdata = new mod_attendance\output\report_data($att);
+
+   
+
     if ($reportdata->users) {
         $filename = clean_filename($course->shortname.'_'.
             get_string('modulenameplural', 'attendance').
@@ -128,7 +133,10 @@ if ($formdata = $mform->get_data()) {
                 if (isset($formdata->includedescription) && !empty($sess->description)) {
                     $text .= " ". strip_tags($sess->description);
                 }
-                $data->tabhead[] = $text;
+                $data->tabhead[] = $text;  // Existing header for session.
+                $data->tabhead[] = get_string('ipaddress', 'mod_attendance');  // New header for IP address
+                $data->tabhead[] = get_string('checkintime', 'mod_attendance');  // New header for check-in time
+                $data->tabhead[] = get_string('location', 'mod_attendance');  // New header for check-in time
                 if (isset($formdata->includeremarks)) {
                     $data->tabhead[] = ''; // Space for the remarks.
                 }
@@ -149,7 +157,7 @@ if ($formdata = $mform->get_data()) {
         $data->tabhead[] = get_string('takensessions', 'attendance');
         $data->tabhead[] = get_string('points', 'attendance');
         $data->tabhead[] = get_string('percentage', 'attendance');
-
+        
         $i = 0;
         $data->table = array();
         foreach ($reportdata->users as $user) {
@@ -177,11 +185,45 @@ if ($formdata = $mform->get_data()) {
                         }
                         continue;
                     }
-
+                    
+                    $sessionid = $sess->id; 
+                    $user_session = $reportdata->sessionslog[$user->id][$sessionid];
                     $data->table[$i][] = $user->$opt;
                 }
             }
-
+            
+            foreach ($reportdata->sessions as $sess) {
+                $sessionid = $sess->id;
+            
+                // Using the fetched logs to get attendance record for the user and session.
+                $user_session = null;
+                foreach ($logs as $log) {
+                    if ($log->sessionid == $sessionid && $log->studentid == $user->id) {
+                        $user_session = $log;
+                        break;
+                    }
+                }
+            
+                if ($user_session) {
+                    // Add the attendance status.
+                    $data->table[$i][] = $reportdata->statuses[$user_session->statusid]->description;
+            
+                    // Fetch the IP address and check-in time from the user's attendance record.
+                    $ip_address = $user_session->ipaddress;
+                    $location = $user_session->location;
+                    $checkin_time = userdate($user_session->checkin_time);
+                    // Add the IP address and check-in time to the data row.
+                    $data->table[$i][] = $ip_address;
+                    $data->table[$i][] = $checkin_time;
+                    $data->table[$i][] = $location;
+                } else {
+                    // If no attendance record, add empty data.
+                    $data->table[$i][] = ''; // Empty attendance status
+                    $data->table[$i][] = ''; // Empty IP address
+                    $data->table[$i][] = ''; // Empty check-in time
+                }
+            }
+        
             $cellsgenerator = new user_sessions_cells_text_generator($reportdata, $user);
             $data->table[$i] = array_merge($data->table[$i], $cellsgenerator->get_cells(isset($formdata->includeremarks)));
 

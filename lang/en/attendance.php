@@ -685,3 +685,5 @@ $string['checkintime'] = 'Check-in Time';
 $string['oncampus'] = 'On campus';
 $string['athome'] = 'At home';
 $string['location'] = 'Location';
+$string[''] = '';
+

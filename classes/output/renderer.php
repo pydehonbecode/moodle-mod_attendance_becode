@@ -776,8 +776,9 @@ class renderer extends plugin_renderer_base {
                 });");
 
         }
-
         $table->head[] = get_string('remarks', 'attendance');
+        $table->head[] = get_string('checkintime', 'attendance');
+        $table->head[] = get_string('location', 'attendance');
         $table->align[] = 'center';
         $table->size[] = '20px';
         $table->attributes['class'] = 'generaltable takelist';
@@ -846,10 +847,18 @@ class renderer extends plugin_renderer_base {
             if (array_key_exists('class', $ucdata)) {
                 $row->attributes['class'] = $ucdata['class'];
             }
-
+            if ($takedata->sessionlog[$user->id]->statusid != ""){
+                $row->cells[] = date("Y-m-d H:i:s", $takedata->sessionlog[$user->id]->checkin_time);
+            } else {
+                $row->cells[] = "";
+            }
+            if ($takedata->sessionlog[$user->id]->location != "") {
+                $row->cells[] = get_string($takedata->sessionlog[$user->id]->location, 'attendance');
+            } else {
+                $row->cells[] = "";
+            }
             $table->data[] = $row;
         }
-
         return html_writer::table($table);
     }
 

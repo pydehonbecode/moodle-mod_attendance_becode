@@ -106,8 +106,8 @@ class studentattendance extends \moodleform {
         
         // Location dropdown
         $locations = array(
-            'on_campus' => get_string('oncampus', 'mod_attendance'),
-            'at_home' => get_string('athome', 'mod_attendance')
+            'oncampus' => get_string('oncampus', 'mod_attendance'),
+            'athome' => get_string('athome', 'mod_attendance')
         );
         $mform->addElement('select', 'location', get_string('location', 'mod_attendance'), $locations);
         $mform->addHelpButton('location', 'location', 'mod_attendance');

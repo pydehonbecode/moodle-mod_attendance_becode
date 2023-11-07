@@ -1143,7 +1143,7 @@ class mod_attendance_structure {
     public function get_session_log($sessionid) : array {
         global $DB;
 
-        return $DB->get_records('attendance_log', array('sessionid' => $sessionid), '', 'studentid,statusid,remarks,id,statusset');
+        return $DB->get_records('attendance_log', array('sessionid' => $sessionid), '', 'studentid,statusid,remarks,id,statusset,location,checkin_time');
     }
 
     /**

@@ -847,16 +847,36 @@ class renderer extends plugin_renderer_base {
             if (array_key_exists('class', $ucdata)) {
                 $row->attributes['class'] = $ucdata['class'];
             }
-            if ($takedata->sessionlog[$user->id]->statusid != ""){
-                $row->cells[] = date("Y-m-d H:i:s", $takedata->sessionlog[$user->id]->checkin_time);
-            } else {
-                $row->cells[] = "";
+            $checkinTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("H:i", $takedata->sessionlog[$user->id]->checkin_time) : '';
+            $timeInput = html_writer::empty_tag('input', [
+                'type' => 'time', 
+                'name' => 'checkin_time['.$user->id.']', 
+                'value' => $checkinTime
+            ]);
+            $row->cells[] = $timeInput;
+            
+            $locationDropdown = html_writer::start_tag('select', ['name' => 'location['.$user->id.']']);
+
+            // Determine the selected option based on the location value
+            if ($takedata->sessionlog[$user->id]->location === null) {
+                $locationDropdown .= '<option value="" selected></option>';
+                $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
+                $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
+            } elseif ($takedata->sessionlog[$user->id]->location == 'oncampus') {
+                $locationDropdown .= '<option value=""></option>';
+                $locationDropdown .= '<option value="oncampus" selected>' . get_string('oncampus', 'attendance') . '</option>';
+                $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
+            } elseif ($takedata->sessionlog[$user->id]->location == 'athome') {
+                $locationDropdown .= '<option value=""></option>';
+                $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
+                $locationDropdown .= '<option value="athome" selected>' . get_string('athome', 'attendance') . '</option>';
             }
-            if ($takedata->sessionlog[$user->id]->location != "") {
-                $row->cells[] = get_string($takedata->sessionlog[$user->id]->location, 'attendance');
-            } else {
-                $row->cells[] = "";
-            }
+        
+            $locationDropdown .= html_writer::end_tag('select');
+            $row->cells[] = $locationDropdown;
+            
+            
+            
             $table->data[] = $row;
         }
         return html_writer::table($table);

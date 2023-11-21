@@ -807,19 +807,27 @@ function xmldb_attendance_upgrade($oldversion=0) {
     }
 
     if ($oldversion < 202310180000) {
-        // Define field checkin_time to be added to attendance_log
+        // Define the table
         $table = new xmldb_table('attendance_log');
-        $field = new xmldb_field('checkin_time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timetaken');
-        $field = new xmldb_field('location', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, '', 'location');
-
-        // Conditionally launch add field checkin_time
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
+    
+        // Define field checkin_time to be added to attendance_log
+        
+        // Define field location to be added to attendance_log
+        $location_field = new xmldb_field('location', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, '', 'ipaddress');
+    
+        // Conditionally launch add field location
+        if (!$dbman->field_exists($table, $location_field)) {
+            $dbman->add_field($table, $location_field);
         }
-
+        $checkin_time_field = new xmldb_field('checkin_time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'location');
+    
+        // Conditionally launch add field checkin_time
+        if (!$dbman->field_exists($table, $checkin_time_field)) {
+            $dbman->add_field($table, $checkin_time_field);
+        }
+    
         // attendance savepoint reached
-        upgrade_mod_savepoint(true, [new_version_number], 'attendance');
+        upgrade_mod_savepoint(true, 202310180000, 'attendance');
     }
-
     return true;
 }

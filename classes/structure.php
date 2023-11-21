@@ -761,36 +761,32 @@ class mod_attendance_structure {
      */
     public function take_from_form_data($data) {
         global $USER;
-        // WARNING - $data is unclean - comes from direct $_POST - ideally needs a rewrite but we do some cleaning below.
-
+    
         $statuses = implode(',', array_keys( (array)$this->get_statuses() ));
         $now = time();
         $sesslog = array();
-
+    
         $formdata = (array)$data;
-
         foreach ($formdata as $key => $value) {
-            // Look at Remarks field because the user options may not be passed if empty.
-            if (substr($key, 0, 7) == 'remarks') {
-                $sid = substr($key, 7);
-                if (!(is_numeric($sid))) { // Sanity check on $sid.
+            if (preg_match('/^user(\d+)$/', $key, $matches)) {
+                $sid = $matches[1];
+                if (!is_numeric($sid)) { // Sanity check on $sid
                     throw new moodle_exception('nonnumericid', 'attendance');
                 }
                 $sesslog[$sid] = new stdClass();
-                $sesslog[$sid]->studentid = $sid; // We check is_numeric on this above.
-                if (array_key_exists('user' . $sid, $formdata) && is_numeric($formdata['user' . $sid])) {
-                    $sesslog[$sid]->statusid = $formdata['user' . $sid];
-                }
+                $sesslog[$sid]->studentid = $sid;
+                $sesslog[$sid]->statusid = $value;
                 $sesslog[$sid]->statusset = $statuses;
-                $sesslog[$sid]->remarks = $value;
+                $sesslog[$sid]->remarks = isset($formdata['remarks'.$sid]) ? $formdata['remarks'.$sid] : '';
                 $sesslog[$sid]->sessionid = $this->pageparams->sessionid;
                 $sesslog[$sid]->timetaken = $now;
                 $sesslog[$sid]->takenby = $USER->id;
-            }
+                $sesslog[$sid]->location = $formdata['location'][$sid];
+                $sesslog[$sid]->checkin_time = strtotime($formdata['checkin_time'][$sid]);            }
         }
-
         $this->save_log($sesslog);
     }
+    
 
     /**
      * Helper function to save attendance and trigger events.
@@ -811,11 +807,14 @@ class mod_attendance_structure {
                     // Don't update timetaken/takenby records if nothing has changed.
                     if ($dbsesslog[$log->studentid]->remarks <> $log->remarks ||
                         $dbsesslog[$log->studentid]->statusid <> $log->statusid ||
-                        $dbsesslog[$log->studentid]->statusset <> $log->statusset) {
-
+                        $dbsesslog[$log->studentid]->statusset <> $log->statusset ||
+                        $dbsesslog[$log->studentid]->location <> $log->location ||
+                        $dbsesslog[$log->studentid]->checkin_time <> $log->checkin_time) {
+                        
                         $log->id = $dbsesslog[$log->studentid]->id;
                         $DB->update_record('attendance_log', $log);
                     }
+
                 } else {
                     $DB->insert_record('attendance_log', $log, false);
                 }

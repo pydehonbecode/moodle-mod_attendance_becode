@@ -858,11 +858,7 @@ class renderer extends plugin_renderer_base {
             $locationDropdown = html_writer::start_tag('select', ['name' => 'location['.$user->id.']']);
 
             // Determine the selected option based on the location value
-            if ($takedata->sessionlog[$user->id]->location === null) {
-                $locationDropdown .= '<option value="" selected></option>';
-                $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
-                $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
-            } elseif ($takedata->sessionlog[$user->id]->location == 'oncampus') {
+            if ($takedata->sessionlog[$user->id]->location == 'oncampus') {
                 $locationDropdown .= '<option value=""></option>';
                 $locationDropdown .= '<option value="oncampus" selected>' . get_string('oncampus', 'attendance') . '</option>';
                 $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
@@ -870,6 +866,10 @@ class renderer extends plugin_renderer_base {
                 $locationDropdown .= '<option value=""></option>';
                 $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
                 $locationDropdown .= '<option value="athome" selected>' . get_string('athome', 'attendance') . '</option>';
+            } else {
+                $locationDropdown .= '<option value="" selected></option>';
+                $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
+                $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
             }
         
             $locationDropdown .= html_writer::end_tag('select');

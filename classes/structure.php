@@ -781,7 +781,9 @@ class mod_attendance_structure {
                 $sesslog[$sid]->sessionid = $this->pageparams->sessionid;
                 $sesslog[$sid]->timetaken = $now;
                 $sesslog[$sid]->takenby = $USER->id;
-                $sesslog[$sid]->location = $formdata['location'][$sid];
+                if (isset($formdata['location'][$sid])) {
+                    $sesslog[$sid]->location = $formdata['location'][$sid];
+                }
                 $sesslog[$sid]->checkin_time = strtotime($formdata['checkin_time'][$sid]);            }
         }
         $this->save_log($sesslog);

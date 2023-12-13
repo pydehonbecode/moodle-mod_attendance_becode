@@ -116,7 +116,7 @@ class attendance_handler {
         $session->attendance_log = array();
 
         if ($attendancelog = $DB->get_records('attendance_log', array('sessionid' => $sessionid),
-                                              '', 'studentid, statusid, remarks, id')) {
+                                              '', 'studentid, statusid, remarks, id, location,checkin_time,checkout_time')) {
             $session->attendance_log = $attendancelog;
         }
 

@@ -778,6 +778,7 @@ class renderer extends plugin_renderer_base {
         }
         $table->head[] = get_string('remarks', 'attendance');
         $table->head[] = get_string('checkintime', 'attendance');
+        $table->head[] = get_string('checkouttime', 'attendance');
         $table->head[] = get_string('location', 'attendance');
         $table->align[] = 'center';
         $table->size[] = '20px';
@@ -853,7 +854,18 @@ class renderer extends plugin_renderer_base {
                 'name' => 'checkin_time['.$user->id.']', 
                 'value' => $checkinTime
             ]);
-            $row->cells[] = $timeInput;
+            $row->cells[] = $timeInput;            
+            $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("H:i", $takedata->sessionlog[$user->id]->checkout_time) : '';
+            if ($takedata->sessionlog[$user->id]->checkout_time != 0) {
+                $timeInput = html_writer::empty_tag('input', [
+                    'type' => 'time', 
+                    'name' => 'checkout_time['.$user->id.']', 
+                    'value' => $checkoutTime
+                ]);
+                $row->cells[] = $timeInput;
+            } else {
+                $row->cells[] = "";
+            }
             
             $locationDropdown = html_writer::start_tag('select', ['name' => 'location['.$user->id.']']);
 
@@ -1378,7 +1390,6 @@ class renderer extends plugin_renderer_base {
                     $row->cells[] = '';
                 }
             }
-
             if (!empty($sess->statusid)) {
                 $updatelink = '';
                 $status = $userdata->statuses[$sess->statusid];
@@ -1388,7 +1399,18 @@ class renderer extends plugin_renderer_base {
                                 array('sessid' => $sess->id, 'sesskey' => sesskey()));
                     $updatelink = "<br>".html_writer::link($url, get_string('updateattendance', 'attendance'));
                 }
-                $row->cells[] = $status->description.$updatelink;
+                if (empty($sess->checkout_time)) {
+                    $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
+                        'sessid' => $sess->id,
+                        'sesskey' => sesskey(),
+                        'action' => 'checkout' // New parameter for checkout action
+                    ));
+                    $checkoutbutton = html_writer::link($checkouturl, get_string('checkout', 'attendance'), array('class' => 'btn btn-primary'));
+                    $row->cells[] = new html_table_cell($checkoutbutton);
+                } else {
+                    $row->cells[] =  get_string('checkedout', 'attendance');
+                } 
+                #$row->cells[] = $status->description.$updatelink;
                 $row->cells[] = format_float($status->grade, 1, true, true) . ' / ' .
                                     format_float($statussetmaxpoints[$status->setnumber], 1, true, true);
                 $row->cells[] = $sess->remarks;

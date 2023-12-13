@@ -29,6 +29,8 @@ require_once(dirname(__FILE__).'/studentlocation_form.php');
 
 $pageparams = new mod_attendance_sessions_page_params();
 
+
+
 // Check that the required parameters are present.
 $id = required_param('sessid', PARAM_INT);
 $qrpass = optional_param('qrpass', '', PARAM_TEXT);
@@ -42,6 +44,20 @@ $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST)
 // Require the user is logged in.
 require_login($course, true, $cm);
 
+$action = optional_param('action', '', PARAM_ALPHA);
+if ($action === 'checkout') {
+    $sessid = required_param('sessid', PARAM_INT); 
+    $now = time();
+
+    $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $USER->id));
+    $existingattendance->checkout_time = $now; // Assuming checkout_time is your field name
+    $DB->update_record('attendance_log', $existingattendance);
+
+    // Redirect after successful checkout
+    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+    redirect($redirecturl, "Successfully Checked out!", null);
+    exit;
+}
 // If group mode is set, check if user can access this session.
 if (!empty($attforsession->groupid) && !groups_is_member($attforsession->groupid, $USER->id)) {
     throw new moodle_exception('cannottakethisgroup', 'attendance');

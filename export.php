@@ -136,6 +136,7 @@ if ($formdata = $mform->get_data()) {
                 $data->tabhead[] = $text;  // Existing header for session.
                 $data->tabhead[] = get_string('ipaddress', 'mod_attendance');  // New header for IP address
                 $data->tabhead[] = get_string('checkintime', 'mod_attendance');  // New header for check-in time
+                $data->tabhead[] = get_string('checkouttime', 'mod_attendance');  // New header for check-in time
                 $data->tabhead[] = get_string('location', 'mod_attendance');  // New header for check-in time
                 if (isset($formdata->includeremarks)) {
                     $data->tabhead[] = ''; // Space for the remarks.
@@ -212,9 +213,11 @@ if ($formdata = $mform->get_data()) {
                     $ip_address = $user_session->ipaddress;
                     $location = $user_session->location;
                     $checkin_time = userdate($user_session->checkin_time);
+                    $checkout_time = userdate($user_session->checkout_time);
                     // Add the IP address and check-in time to the data row.
                     $data->table[$i][] = $ip_address;
                     $data->table[$i][] = $checkin_time;
+                    $data->table[$i][] = $checkout_time;
                     $data->table[$i][] = $location;
                 } else {
                     // If no attendance record, add empty data.

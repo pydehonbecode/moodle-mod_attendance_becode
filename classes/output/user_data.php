@@ -71,7 +71,6 @@ class user_data implements renderable {
         $this->user = $att->get_user($userid);
 
         $this->pageparams = $att->pageparams;
-
         if ($this->pageparams->mode == mod_attendance_view_page_params::MODE_THIS_COURSE) {
             $this->statuses = $att->get_statuses(true, true);
 

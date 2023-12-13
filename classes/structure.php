@@ -309,7 +309,6 @@ class mod_attendance_structure {
             }
             $sess->maxpoints = $statussetmaxpoints[$sess->statusset];
         }
-
         return $sessions;
     }
 
@@ -784,7 +783,8 @@ class mod_attendance_structure {
                 if (isset($formdata['location'][$sid])) {
                     $sesslog[$sid]->location = $formdata['location'][$sid];
                 }
-                $sesslog[$sid]->checkin_time = strtotime($formdata['checkin_time'][$sid]);            }
+                $sesslog[$sid]->checkin_time = strtotime($formdata['checkin_time'][$sid]);
+                $sesslog[$sid]->checkout_time = strtotime($formdata['checkout_time'][$sid]);            }
         }
         $this->save_log($sesslog);
     }
@@ -1144,7 +1144,7 @@ class mod_attendance_structure {
     public function get_session_log($sessionid) : array {
         global $DB;
 
-        return $DB->get_records('attendance_log', array('sessionid' => $sessionid), '', 'studentid,statusid,remarks,id,statusset,location,checkin_time');
+        return $DB->get_records('attendance_log', array('sessionid' => $sessionid), '', 'studentid,statusid,remarks,id,statusset,location,checkin_time,checkout_time');
     }
 
     /**
@@ -1229,7 +1229,7 @@ class mod_attendance_structure {
         $id = $DB->sql_concat(':value', 'ats.id');
         if ($this->get_group_mode()) {
             $sql = "SELECT $id, ats.id, ats.groupid, ats.sessdate, ats.duration, ats.description,
-                           al.statusid, al.remarks, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
+                           al.statusid, al.remarks, al.checkin_time, al.checkout_time, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
                            ats.preventsharedip, ats.preventsharediptime, ats.rotateqrcode,
                            ats.studentsearlyopentime
                       FROM {attendance_sessions} ats
@@ -1240,7 +1240,7 @@ class mod_attendance_structure {
                   ORDER BY ats.sessdate ASC";
         } else {
             $sql = "SELECT $id, ats.id, ats.groupid, ats.sessdate, ats.duration, ats.description, ats.statusset,
-                           al.statusid, al.remarks, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
+                           al.statusid, al.remarks,  al.checkin_time, al.checkout_time, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
                            ats.preventsharedip, ats.preventsharediptime, ats.rotateqrcode,
                            ats.studentsearlyopentime
                       FROM {attendance_sessions} ats
@@ -1272,7 +1272,7 @@ class mod_attendance_structure {
             $where = "ats.attendanceid = :aid AND ats.sessdate >= :csdate AND ats.groupid $gsql";
         }
         $sql = "SELECT $id, ats.id, ats.groupid, ats.sessdate, ats.duration, ats.description, ats.statusset,
-                       al.statusid, al.remarks, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
+                       al.statusid, al.remarks,  al.checkin_time, al.checkout_time, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
                        ats.preventsharedip, ats.preventsharediptime, ats.rotateqrcode,
                        ats.studentsearlyopentime
                   FROM {attendance_sessions} ats

@@ -829,5 +829,21 @@ function xmldb_attendance_upgrade($oldversion=0) {
         // attendance savepoint reached
         upgrade_mod_savepoint(true, 202310180000, 'attendance');
     }
+
+    if ($oldversion < 202310180001) {
+        // Define the table
+        $table = new xmldb_table('attendance_log');
+
+        // Define field checkout_time to be added to attendance_log
+        $checkout_time_field = new xmldb_field('checkout_time', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'location');
+
+        // Conditionally launch add field checkout_time
+        if (!$dbman->field_exists($table, $checkout_time_field)) {
+            $dbman->add_field($table, $checkout_time_field);
+        }
+
+        // Attendance savepoint reached
+        upgrade_mod_savepoint(true, 202310180001, 'attendance');
+    }
     return true;
 }

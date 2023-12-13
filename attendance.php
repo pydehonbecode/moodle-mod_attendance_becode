@@ -45,6 +45,22 @@ $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST)
 require_login($course, true, $cm);
 
 $action = optional_param('action', '', PARAM_ALPHA);
+if ($action === 'forcecheckout') {
+    $sessid = required_param('sessid', PARAM_INT); 
+    $learnerid = required_param('learnerid', PARAM_INT); 
+    
+    $now = time();
+    echo(var_dump($sessid));
+    $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
+    $existingattendance->checkout_time = $now; // Assuming checkout_time is your field name
+    $DB->update_record('attendance_log', $existingattendance);
+
+    // Redirect after successful checkout
+    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+    redirect($redirecturl, "Successfully Checked out!", null);
+    exit;
+}
+
 if ($action === 'checkout') {
     $sessid = required_param('sessid', PARAM_INT); 
     $now = time();

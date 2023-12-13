@@ -220,10 +220,12 @@ if ($formdata = $mform->get_data()) {
                     $data->table[$i][] = $checkout_time;
                     $data->table[$i][] = $location;
                 } else {
+                    $data->table[$i][] = "";
                     // If no attendance record, add empty data.
                     $data->table[$i][] = ''; // Empty attendance status
                     $data->table[$i][] = ''; // Empty IP address
                     $data->table[$i][] = ''; // Empty check-in time
+                    $data->table[$i][] = ''; // Empty check-out time
                 }
             }
         

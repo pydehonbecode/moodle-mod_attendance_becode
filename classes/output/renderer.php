@@ -864,7 +864,13 @@ class renderer extends plugin_renderer_base {
                 ]);
                 $row->cells[] = $timeInput;
             } else {
-                $row->cells[] = "";
+                $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
+                    'sessid' => $takedata->sessionlog[$user->id]->id,
+                    'learnerid' => $user->id,
+                    'action' => 'force-checkout' // New parameter for checkout action
+                ));
+                $checkoutbutton = html_writer::link($checkouturl, get_string('forcecheckout', 'attendance'), array('class' => 'btn btn-primary'));
+                $row->cells[] = new html_table_cell($checkoutbutton);
             }
             
             $locationDropdown = html_writer::start_tag('select', ['name' => 'location['.$user->id.']']);

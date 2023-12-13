@@ -686,6 +686,7 @@ $string['checkouttime'] = 'Check-out Time';
 $string['checkedin'] = 'Checked in';
 $string['checkedout'] = 'Checked out';
 $string['checkout'] = 'Check out';
+$string['forcecheckout'] = 'Force Check out';
 $string['oncampus'] = 'On campus';
 $string['athome'] = 'At home';
 $string['location'] = 'Location';

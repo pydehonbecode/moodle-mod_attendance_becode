@@ -865,7 +865,7 @@ class renderer extends plugin_renderer_base {
                 $row->cells[] = $timeInput;
             } else {
                 $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
-                    'sessid' => $takedata->sessionlog[$user->id]->id,
+                    'sessid' => $takedata->pageparams->sessionid,
                     'learnerid' => $user->id,
                     'action' => 'force-checkout' // New parameter for checkout action
                 ));

@@ -50,7 +50,6 @@ if ($action === 'forcecheckout') {
     $learnerid = required_param('learnerid', PARAM_INT); 
     
     $now = time();
-    echo(var_dump($sessid));
     $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
     $existingattendance->checkout_time = $now; // Assuming checkout_time is your field name
     $DB->update_record('attendance_log', $existingattendance);

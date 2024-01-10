@@ -848,17 +848,17 @@ class renderer extends plugin_renderer_base {
             if (array_key_exists('class', $ucdata)) {
                 $row->attributes['class'] = $ucdata['class'];
             }
-            $checkinTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("H:i", $takedata->sessionlog[$user->id]->checkin_time) : '';
+            $checkinTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d/m/Y H:i", $takedata->sessionlog[$user->id]->checkin_time) : '';
             $timeInput = html_writer::empty_tag('input', [
-                'type' => 'time', 
+                'type' => 'date_time_selector', 
                 'name' => 'checkin_time['.$user->id.']', 
                 'value' => $checkinTime
             ]);
             $row->cells[] = $timeInput;            
-            $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("H:i", $takedata->sessionlog[$user->id]->checkout_time) : '';
+            $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d/m/Y H:i", $takedata->sessionlog[$user->id]->checkout_time) : '';
             if ($takedata->sessionlog[$user->id]->checkout_time != 0) {
                 $timeInput = html_writer::empty_tag('input', [
-                    'type' => 'time', 
+                    'type' => 'date_time_selector', 
                     'name' => 'checkout_time['.$user->id.']', 
                     'value' => $checkoutTime
                 ]);
@@ -867,7 +867,7 @@ class renderer extends plugin_renderer_base {
                 $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
                     'sessid' => $takedata->pageparams->sessionid,
                     'learnerid' => $user->id,
-                    'action' => 'force-checkout' // New parameter for checkout action
+                    'action' => 'forcecheckout' // New parameter for checkout action
                 ));
                 $checkoutbutton = html_writer::link($checkouturl, get_string('forcecheckout', 'attendance'), array('class' => 'btn btn-primary'));
                 $row->cells[] = new html_table_cell($checkoutbutton);

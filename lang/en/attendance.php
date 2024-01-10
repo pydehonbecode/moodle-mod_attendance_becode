@@ -690,5 +690,6 @@ $string['forcecheckout'] = 'Force Check out';
 $string['oncampus'] = 'On campus';
 $string['athome'] = 'At home';
 $string['location'] = 'Location';
+$string['niss'] = 'NISS';
 $string[''] = '';
 

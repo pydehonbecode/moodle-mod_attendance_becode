@@ -848,14 +848,14 @@ class renderer extends plugin_renderer_base {
             if (array_key_exists('class', $ucdata)) {
                 $row->attributes['class'] = $ucdata['class'];
             }
-            $checkinTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d/m/Y H:i", $takedata->sessionlog[$user->id]->checkin_time) : '';
+            $checkinTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkin_time)) : '';
             $timeInput = html_writer::empty_tag('input', [
                 'type' => 'date_time_selector', 
                 'name' => 'checkin_time['.$user->id.']', 
                 'value' => $checkinTime
             ]);
             $row->cells[] = $timeInput;            
-            $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d/m/Y H:i", $takedata->sessionlog[$user->id]->checkout_time) : '';
+            $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkout_time)) : '';
             if ($takedata->sessionlog[$user->id]->checkout_time != 0) {
                 $timeInput = html_writer::empty_tag('input', [
                     'type' => 'date_time_selector', 

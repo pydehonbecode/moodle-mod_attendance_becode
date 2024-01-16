@@ -783,8 +783,9 @@ class mod_attendance_structure {
                 if (isset($formdata['location'][$sid])) {
                     $sesslog[$sid]->location = $formdata['location'][$sid];
                 }
-                $sesslog[$sid]->checkin_time = strtotime($formdata['checkin_time'][$sid]);
-                $sesslog[$sid]->checkout_time = strtotime($formdata['checkout_time'][$sid]);            }
+                $sesslog[$sid]->checkin_time = strtotime(str_replace("/","-",$formdata['checkin_time'][$sid]));
+                $sesslog[$sid]->checkout_time = strtotime(str_replace("/","-",$formdata['checkout_time'][$sid]));  
+            }
         }
         $this->save_log($sesslog);
     }
@@ -811,8 +812,8 @@ class mod_attendance_structure {
                         $dbsesslog[$log->studentid]->statusid <> $log->statusid ||
                         $dbsesslog[$log->studentid]->statusset <> $log->statusset ||
                         $dbsesslog[$log->studentid]->location <> $log->location ||
-                        $dbsesslog[$log->studentid]->checkin_time <> $log->checkin_time) {
-                        
+                        $dbsesslog[$log->studentid]->checkin_time <> $log->checkin_time ||
+                        $dbsesslog[$log->studentid]->checkout_time <> $log->checkout_time) {
                         $log->id = $dbsesslog[$log->studentid]->id;
                         $DB->update_record('attendance_log', $log);
                     }

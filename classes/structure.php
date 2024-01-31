@@ -719,6 +719,7 @@ class mod_attendance_structure {
         } else {
             $record->checkin_time = $now;
             $record->timetaken = $now;
+            $record->approved = 0;
             $logid = $DB->insert_record('attendance_log', $record);
             $record->id = $logid;
         }
@@ -813,7 +814,10 @@ class mod_attendance_structure {
                         $dbsesslog[$log->studentid]->statusset <> $log->statusset ||
                         $dbsesslog[$log->studentid]->location <> $log->location ||
                         $dbsesslog[$log->studentid]->checkin_time <> $log->checkin_time ||
-                        $dbsesslog[$log->studentid]->checkout_time <> $log->checkout_time) {
+                        $dbsesslog[$log->studentid]->checkout_time <> $log->checkout_time ||
+                        $dbsesslog[$log->studentid]->approved <> $log->approved ||
+                        $dbsesslog[$log->studentid]->itemid <> $log->itemid ||
+                        $dbsesslog[$log->studentid]->filepath <> $log->filepath) {
                         $log->id = $dbsesslog[$log->studentid]->id;
                         $DB->update_record('attendance_log', $log);
                     }
@@ -1145,7 +1149,7 @@ class mod_attendance_structure {
     public function get_session_log($sessionid) : array {
         global $DB;
 
-        return $DB->get_records('attendance_log', array('sessionid' => $sessionid), '', 'studentid,statusid,remarks,id,statusset,location,checkin_time,checkout_time');
+        return $DB->get_records('attendance_log', array('sessionid' => $sessionid), '', 'studentid,statusid,remarks,id,statusset,location,checkin_time,checkout_time, approved, filepath, itemid');
     }
 
     /**
@@ -1230,7 +1234,7 @@ class mod_attendance_structure {
         $id = $DB->sql_concat(':value', 'ats.id');
         if ($this->get_group_mode()) {
             $sql = "SELECT $id, ats.id, ats.groupid, ats.sessdate, ats.duration, ats.description,
-                           al.statusid, al.remarks, al.checkin_time, al.checkout_time, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
+                           al.statusid, al.remarks, al.checkin_time, al.checkout_time, al.filepath, al.approved, al.itemid, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
                            ats.preventsharedip, ats.preventsharediptime, ats.rotateqrcode,
                            ats.studentsearlyopentime
                       FROM {attendance_sessions} ats
@@ -1241,7 +1245,7 @@ class mod_attendance_structure {
                   ORDER BY ats.sessdate ASC";
         } else {
             $sql = "SELECT $id, ats.id, ats.groupid, ats.sessdate, ats.duration, ats.description, ats.statusset,
-                           al.statusid, al.remarks,  al.checkin_time, al.checkout_time, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
+                           al.statusid, al.remarks,  al.checkin_time, al.checkout_time, al.filepath, al.approved, al.itemid, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
                            ats.preventsharedip, ats.preventsharediptime, ats.rotateqrcode,
                            ats.studentsearlyopentime
                       FROM {attendance_sessions} ats
@@ -1273,7 +1277,7 @@ class mod_attendance_structure {
             $where = "ats.attendanceid = :aid AND ats.sessdate >= :csdate AND ats.groupid $gsql";
         }
         $sql = "SELECT $id, ats.id, ats.groupid, ats.sessdate, ats.duration, ats.description, ats.statusset,
-                       al.statusid, al.remarks,  al.checkin_time, al.checkout_time, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
+                       al.statusid, al.remarks,  al.checkin_time, al.checkout_time, al.filepath, al.approved, al.itemid, ats.studentscanmark, ats.allowupdatestatus, ats.autoassignstatus,
                        ats.preventsharedip, ats.preventsharediptime, ats.rotateqrcode,
                        ats.studentsearlyopentime
                   FROM {attendance_sessions} ats

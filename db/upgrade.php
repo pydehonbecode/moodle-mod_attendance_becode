@@ -845,5 +845,25 @@ function xmldb_attendance_upgrade($oldversion=0) {
         // Attendance savepoint reached
         upgrade_mod_savepoint(true, 202310180001, 'attendance');
     }
+
+    if ($oldversion < 202310190001) {
+        // Define the new table absence
+        $table = new xmldb_table('attendance_log');
+        $filepath = new xmldb_field('filepath', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $approved = new xmldb_field('approved', XMLDB_TYPE_BINARY, '1', null, XMLDB_NOTNULL, null, 0);
+        $itemid = new xmldb_field(('itemid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        // Adding fields to the table absence
+        if (!$dbman->field_exists($table, $filepath)) {
+            $table->add_field($table, $filepath);
+        }
+        if (!$dbman->field_exists($table, $approved)) {
+            $table->add_field($table, $approved);
+        }
+        if (!$dbman->field_exists($table, $itemid)) {
+            $table->add_field($table, $itemid);
+        }
+        // Absence table savepoint reached
+        upgrade_mod_savepoint(true, 202310190001, 'attendance');
+    }
     return true;
 }

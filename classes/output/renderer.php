@@ -826,8 +826,8 @@ class renderer extends plugin_renderer_base {
             $row = new html_table_row();
             $fullname = html_writer::link($takedata->url_view(array('studentid' => $user->id)), fullname($user));
             $fullname = $this->user_picture($user).$fullname; // Show different picture if it is a temporary user.
-
             $ucdata = $this->construct_take_user_controls($takedata, $user);
+
             if (array_key_exists('warning', $ucdata)) {
                 $fullname .= html_writer::empty_tag('br');
                 $fullname .= $ucdata['warning'];
@@ -848,51 +848,104 @@ class renderer extends plugin_renderer_base {
             if (array_key_exists('class', $ucdata)) {
                 $row->attributes['class'] = $ucdata['class'];
             }
-            $checkinTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkin_time)) : '';
-            $timeInput = html_writer::empty_tag('input', [
-                'type' => 'date_time_selector', 
-                'name' => 'checkin_time['.$user->id.']', 
-                'value' => $checkinTime
-            ]);
-            $row->cells[] = $timeInput;            
-            $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkout_time)) : '';
-            if ($takedata->sessionlog[$user->id]->checkout_time != 0) {
+            if ($takedata->sessionlog[$user->id]->filepath && !$takedata->sessionlog[$user->id]->approved) {
+                $context = context_module::instance($takedata->cm->id);
+                #$context = context_module::instance($cm->id);
+
+                // Get the file storage API
+                $fs = get_file_storage();
+
+                // Get the file
+                $files = $fs->get_area_files($context->id, 'mod_attendance', 'attendance', $takedata->sessionlog[$user->id]->itemid, null, false);
+                if (!empty($files)) {
+                    // Get the first file (should only be one)
+                    $file = reset($files);
+                    // Generate a URL for the file
+                    $url = moodle_url::make_pluginfile_url($file->get_contextid(), $file->get_component(), $file->get_filearea(), $file->get_itemid(), $file->get_filepath(), $file->get_filename());
+                    
+                    // Output the URL in your table cell
+                    $row->cells[] = "<a href='$url'> Download justification </a>";
+                    $approveurl = new moodle_url('/mod/attendance/attendance.php', array(
+                        'sessid' => $takedata->pageparams->sessionid,
+                        'learnerid' => $user->id,
+                        'itemid' => $takedata->sessionlog[$user->id]->itemid,
+                        'action' => 'approve' // New parameter for checkout action
+                    ));
+                    $discarturl = new moodle_url('/mod/attendance/attendance.php', array(
+                        'sessid' => $takedata->pageparams->sessionid,
+                        'learnerid' => $user->id,
+                        'itemid' => $takedata->sessionlog[$user->id]->itemid,
+                        'action' => 'discart' // New parameter for checkout action
+                    ));
+                    $approvebutton = html_writer::link($approveurl, get_string('approve', 'attendance'), array('class' => 'btn btn-primary'));
+                    $row->cells[] = new html_table_cell($approvebutton);
+                    $discartbutton = html_writer::link($discarturl, get_string('discart', 'attendance'), array('class' => 'btn btn-primary'));
+                    $row->cells[] = new html_table_cell($discartbutton);
+                }
+            } else if ($takedata->sessionlog[$user->id]->filepath && $takedata->sessionlog[$user->id]->approved) {
+                $context = context_module::instance($takedata->cm->id);
+                #$context = context_module::instance($cm->id);
+
+                // Get the file storage API
+                $fs = get_file_storage();
+
+                // Get the file
+                $files = $fs->get_area_files($context->id, 'mod_attendance', 'attendance', $takedata->sessionlog[$user->id]->itemid, null, false);
+                if (!empty($files)) {
+                    // Get the first file (should only be one)
+                    $file = reset($files);
+                    // Generate a URL for the file
+                    $url = moodle_url::make_pluginfile_url($file->get_contextid(), $file->get_component(), $file->get_filearea(), $file->get_itemid(), $file->get_filepath(), $file->get_filename());
+                    
+                    // Output the URL in your table cell
+                    $row->cells[] = "<a href='$url'> Download justification </a>";
+                }
+            } else {
+                $checkinTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkin_time)) : '';
                 $timeInput = html_writer::empty_tag('input', [
                     'type' => 'date_time_selector', 
-                    'name' => 'checkout_time['.$user->id.']', 
-                    'value' => $checkoutTime
+                    'name' => 'checkin_time['.$user->id.']', 
+                    'value' => $checkinTime
                 ]);
-                $row->cells[] = $timeInput;
-            } else {
-                $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
-                    'sessid' => $takedata->pageparams->sessionid,
-                    'learnerid' => $user->id,
-                    'action' => 'forcecheckout' // New parameter for checkout action
-                ));
-                $checkoutbutton = html_writer::link($checkouturl, get_string('forcecheckout', 'attendance'), array('class' => 'btn btn-primary'));
-                $row->cells[] = new html_table_cell($checkoutbutton);
-            }
-            
-            $locationDropdown = html_writer::start_tag('select', ['name' => 'location['.$user->id.']']);
+                $row->cells[] = $timeInput;            
+                $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkout_time)) : '';
+                if ($takedata->sessionlog[$user->id]->checkout_time != 0) {
+                    $timeInput = html_writer::empty_tag('input', [
+                        'type' => 'date_time_selector', 
+                        'name' => 'checkout_time['.$user->id.']', 
+                        'value' => $checkoutTime
+                    ]);
+                    $row->cells[] = $timeInput;
+                } else {
+                    $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
+                        'sessid' => $takedata->pageparams->sessionid,
+                        'learnerid' => $user->id,
+                        'action' => 'forcecheckout' // New parameter for checkout action
+                    ));
+                    $checkoutbutton = html_writer::link($checkouturl, get_string('forcecheckout', 'attendance'), array('class' => 'btn btn-primary'));
+                    $row->cells[] = new html_table_cell($checkoutbutton);
+                }
+                
+                $locationDropdown = html_writer::start_tag('select', ['name' => 'location['.$user->id.']']);
 
-            // Determine the selected option based on the location value
-            if ($takedata->sessionlog[$user->id]->location == 'oncampus') {
-                $locationDropdown .= '<option value=""></option>';
-                $locationDropdown .= '<option value="oncampus" selected>' . get_string('oncampus', 'attendance') . '</option>';
-                $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
-            } elseif ($takedata->sessionlog[$user->id]->location == 'athome') {
-                $locationDropdown .= '<option value=""></option>';
-                $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
-                $locationDropdown .= '<option value="athome" selected>' . get_string('athome', 'attendance') . '</option>';
-            } else {
-                $locationDropdown .= '<option value="" selected></option>';
-                $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
-                $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
-            }
-        
-            $locationDropdown .= html_writer::end_tag('select');
-            $row->cells[] = $locationDropdown;
+                // Determine the selected option based on the location value
+                if ($takedata->sessionlog[$user->id]->location == 'oncampus') {
+                    $locationDropdown .= '<option value=""></option>';
+                    $locationDropdown .= '<option value="oncampus" selected>' . get_string('oncampus', 'attendance') . '</option>';
+                    $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
+                } elseif ($takedata->sessionlog[$user->id]->location == 'athome') {
+                    $locationDropdown .= '<option value=""></option>';
+                    $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
+                    $locationDropdown .= '<option value="athome" selected>' . get_string('athome', 'attendance') . '</option>';
+                } else {
+                    $locationDropdown .= '<option value="" selected></option>';
+                    $locationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
+                    $locationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
+                }
             
+                $locationDropdown .= html_writer::end_tag('select');
+                $row->cells[] = $locationDropdown;
+            }
             
             
             $table->data[] = $row;
@@ -1319,7 +1372,6 @@ class renderer extends plugin_renderer_base {
             // This is a user viewing their own stuff - hide non-relevant columns.
             $shortform = true;
         }
-
         $table = new html_table();
         $table->attributes['class'] = 'generaltable attwidth boxaligncenter';
         $table->head = array();
@@ -1396,6 +1448,7 @@ class renderer extends plugin_renderer_base {
                     $row->cells[] = '';
                 }
             }
+            $now = time();
             if (!empty($sess->statusid)) {
                 $updatelink = '';
                 $status = $userdata->statuses[$sess->statusid];
@@ -1405,7 +1458,7 @@ class renderer extends plugin_renderer_base {
                                 array('sessid' => $sess->id, 'sesskey' => sesskey()));
                     $updatelink = "<br>".html_writer::link($url, get_string('updateattendance', 'attendance'));
                 }
-                if (empty($sess->checkout_time)) {
+                if (empty($sess->checkout_time) && empty($sess->filepath) && date('d-m-Y', $now) == date('d-m-Y', $sess->sessdate)) {
                     $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
                         'sessid' => $sess->id,
                         'sesskey' => sesskey(),
@@ -1420,7 +1473,23 @@ class renderer extends plugin_renderer_base {
                 $row->cells[] = format_float($status->grade, 1, true, true) . ' / ' .
                                     format_float($statussetmaxpoints[$status->setnumber], 1, true, true);
                 $row->cells[] = $sess->remarks;
-            } else if (($sess->sessdate + $sess->duration) < $userdata->user->enrolmentstart) {
+            } else if (date('d-m-Y',$sess->sessdate) < date('d-m-Y', $now) && date('m', $now) == date('m', $sess->sessdate)) {
+                if($sess->filepath) {  
+                    $row->cells[] = get_string('justifiednotapproved', 'attendance');
+                } else {
+                    $cell = new html_table_cell("");
+                    $cell->colspan = 1;
+                    $row->cells[] = $cell;
+                    $url = new moodle_url('/mod/attendance/absence.php', array(
+                        'sessid' => $sess->id,
+                        'studentid' => $userdata->user->id,
+                        'sesskey' => sesskey(),
+                        'action' => 'absence' // New parameter for checkout action
+                    ));
+                    $absencebutton = html_writer::link($url, get_string('absencepastrereport', 'attendance'), array('class' => 'btn btn-primary'));
+                    $row->cells[] = new html_table_cell($absencebutton);
+                }
+            }  else if (($sess->sessdate + $sess->duration) < $userdata->user->enrolmentstart) {
                 $cell = new html_table_cell(get_string('enrolmentstart', 'attendance',
                                             userdate($userdata->user->enrolmentstart, '%d.%m.%Y')));
                 $cell->colspan = 3;
@@ -1449,19 +1518,34 @@ class renderer extends plugin_renderer_base {
                                                                         'class' => 'btn btn-secondary']);
                             $cell = new html_table_cell(html_writer::tag('form', $output,
                                                                          ['action' => $url->out(), 'method' => 'get']));
-                        } else {
-                            $cell = new html_table_cell(html_writer::link($url, get_string('submitattendance', 'attendance')));
+                            $cell->colspan = 3;
+                            $row->cells[] = $cell;
+                        } else if (empty($sess->filepath)){
+                            $checkinbutton = html_writer::link($url, get_string('submitattendance', 'attendance'), array('class' => 'btn btn-primary'));
+                            $cell = new html_table_cell($checkinbutton);
+                            $cell->colspan = 1;
+                            $row->cells[] = $cell;
+                            $url = new moodle_url('/mod/attendance/absence.php', array(
+                                'sessid' => $sess->id,
+                                'studentid' => $userdata->user->id,
+                                'sesskey' => sesskey(),
+                                'action' => 'absence' // New parameter for checkout action
+                            ));
+                            $absencebutton = html_writer::link($url, get_string('absencereport', 'attendance'), array('class' => 'btn btn-primary'));
+                            $row->cells[] = new html_table_cell($absencebutton);                            
                         }
-                    } else {
-                        $cell = new html_table_cell(html_writer::link($url, get_string('submitattendancefuture', 'attendance')));
+                    } else if (empty($sess->filepath)) { // Student cannot mark their own attendace.
+                        $row->cells[] = '?';
+                        $url = new moodle_url('/mod/attendance/absence.php', array(
+                            'sessid' => $sess->id,
+                            'studentid' => $userdata->user->id,
+                            'sesskey' => sesskey(),
+                            'action' => 'absence' // New parameter for checkout action
+                        ));
+                        $absencebutton = html_writer::link($url, get_string('absencefuturereport', 'attendance'), array('class' => 'btn btn-primary'));
+                        $row->cells[] = new html_table_cell($absencebutton); 
                     }
-                    $cell->colspan = 3;
-                    $row->cells[] = $cell;
-                } else { // Student cannot mark their own attendace.
-                    $row->cells[] = '?';
-                    $row->cells[] = '? / ' . format_float($statussetmaxpoints[$sess->statusset], 1, true, true);
-                    $row->cells[] = '';
-                }
+                } 
             }
 
             if (has_capability('mod/attendance:takeattendances', $context)) {
@@ -2068,8 +2152,8 @@ class renderer extends plugin_renderer_base {
                             format_float($statussetmaxpoints[$status->setnumber], 1, true, true);
                         $row->cells[] = $sess->remarks;
                     } else if (($sess->sessdate + $sess->duration) < $userdata->user->enrolmentstart) {
-                        $cell = new html_table_cell(get_string('enrolmentstart', 'attendance',
-                        userdate($userdata->user->enrolmentstart, '%d.%m.%Y')));
+                        $cell = new html_table_cell("get_string('enrolmentstart', 'attendance',
+                        userdate($userdata->user->enrolmentstart, '%d.%m.%Y'))");
                         $cell->colspan = 3;
                         $row->cells[] = $cell;
                     } else if ($userdata->user->enrolmentend && $sess->sessdate > $userdata->user->enrolmentend) {

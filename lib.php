@@ -435,7 +435,7 @@ function attendance_scale_used_anywhere($scaleid) {
  * @param bool $forcedownload
  * @return bool false if file not found, does not return if found - justsend the file
  */
-function attendance_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
+function attendance_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, $options) {
     global $DB;
 
     if ($context->contextlevel != CONTEXT_MODULE) {
@@ -449,23 +449,29 @@ function attendance_pluginfile($course, $cm, $context, $filearea, $args, $forced
     }
 
     // Session area is served by pluginfile.php.
-    $fileareas = array('session');
+    $fileareas = array('session', 'attendance');
     if (!in_array($filearea, $fileareas)) {
         return false;
     }
 
     $sessid = (int)array_shift($args);
     if (!$DB->record_exists('attendance_sessions', array('id' => $sessid))) {
-        return false;
-    }
+        $fs = get_file_storage();
+        $relativepath = implode('/', $args);
+        $fullpath = "/$context->id/mod_attendance/$filearea/$sessid/$relativepath";
+        $file = $fs->get_file_by_hash(sha1($fullpath));
+        send_stored_file($file, 0, 0, true);
+    } else {
+        $fs = get_file_storage();
+        $relativepath = implode('/', $args);
+        $fullpath = "/$context->id/mod_attendance/$filearea/$sessid/$relativepath";
+        if (!$file = $fs->get_file_by_hash(sha1($fullpath)) || $file->is_directory()) {
+            return false;
+        }
 
-    $fs = get_file_storage();
-    $relativepath = implode('/', $args);
-    $fullpath = "/$context->id/mod_attendance/$filearea/$sessid/$relativepath";
-    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) || $file->is_directory()) {
-        return false;
+        send_stored_file($file, 0, 0, true);
+
     }
-    send_stored_file($file, 0, 0, true);
 }
 
 /**

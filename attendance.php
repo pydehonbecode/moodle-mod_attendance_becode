@@ -41,37 +41,98 @@ $attendance = $DB->get_record('attendance', array('id' => $attforsession->attend
 $cm = get_coursemodule_from_instance('attendance', $attendance->id, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
+$pageparams->sessionid = $id;
+$att = new mod_attendance_structure($attendance, $cm, $course, $PAGE->context, $pageparams);
+
 // Require the user is logged in.
 require_login($course, true, $cm);
 
 $action = optional_param('action', '', PARAM_ALPHA);
-if ($action === 'forcecheckout') {
+if ($action == 'approve') {
+    $sessid = required_param('sessid', PARAM_INT); 
+    $learnerid = required_param('learnerid', PARAM_INT); 
+    $itemid = required_param('itemid', PARAM_INT); 
+    $existing = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
+    $existing->statusid = 8;
+    $existing->remarks = 'Justification approved';
+    $existing->approved = 1;
+    $DB->update_record('attendance_log', $existing);
+    $sessioninfo = $DB->get_record('attendance_sessions', array('id' => $sessid));
+    $statusset = $sessioninfo->statusset;
+    $sessioninfo->lasttaken = $now;
+    $sessioninfo->lasttakenby = $USER->id;
+    $DB->update_record('attendance_sessions', $sessioninfo);
+    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+    redirect($redirecturl, "Justification approved!", null);
+    exit;
+}
+
+if ($action == 'discart') {
+    $context = context_module::instance($cm->id);
+
+    $sessid = required_param('sessid', PARAM_INT); 
+    $learnerid = required_param('learnerid', PARAM_INT); 
+    $itemid = required_param('itemid', PARAM_INT); 
+    $existing = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($context->id, 'mod_attendance', 'attendance', $existing->itemid, null, false);
+    if (!empty($files)) {
+        $file = reset($files);
+    }
+    $existing->statusid = 6;
+    $existing->filepath = null;
+    $existing->remarks = 'Justification not approved';
+    $existing->approved = 0;
+    $DB->update_record('attendance_log', $existing);
+    $sessioninfo = $DB->get_record('attendance_sessions', array('id' => $sessid));
+    $statusset = $sessioninfo->statusset;
+    $sessioninfo->lasttaken = $now;
+    $sessioninfo->lasttakenby = $USER->id;
+    $DB->update_record('attendance_sessions', $sessioninfo);
+    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+    redirect($redirecturl, "Justification discarted!", null);
+    exit;
+}
+
+if ($action == 'forcecheckout') {
     $sessid = required_param('sessid', PARAM_INT); 
     $learnerid = required_param('learnerid', PARAM_INT); 
     
     $now = time();
     $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
-    $existingattendance->checkout_time = $now; // Assuming checkout_time is your field name
-    $DB->update_record('attendance_log', $existingattendance);
+    if ($existingattendance) {
+        $existingattendance->checkout_time = $now; // Assuming checkout_time is your field name
+        $DB->update_record('attendance_log', $existingattendance);
 
-    // Redirect after successful checkout
-    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
-    redirect($redirecturl, "Successfully Checked out!", null);
-    exit;
+        // Redirect after successful checkout
+        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+        redirect($redirecturl, "Successfully Checked out!", null);
+        exit;
+    } else {
+        // Redirect after successful checkout
+        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+        redirect($redirecturl, "The learner didn't checkin yet!", null);
+        exit;
+    }
 }
 
-if ($action === 'checkout') {
+if ($action == 'checkout') {
     $sessid = required_param('sessid', PARAM_INT); 
     $now = time();
 
     $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $USER->id));
-    $existingattendance->checkout_time = $now; // Assuming checkout_time is your field name
-    $DB->update_record('attendance_log', $existingattendance);
+    if($existingattendance){
+        $existingattendance->checkout_time = $now; // Assuming checkout_time is your field name
+        $DB->update_record('attendance_log', $existingattendance);
 
-    // Redirect after successful checkout
-    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
-    redirect($redirecturl, "Successfully Checked out!", null);
-    exit;
+        // Redirect after successful checkout
+        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+        redirect($redirecturl, "Successfully Checked out!", null);
+        exit;
+    } else {
+        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+        redirect($redirecturl, "Not checked in yet", null);
+    }
 }
 // If group mode is set, check if user can access this session.
 if (!empty($attforsession->groupid) && !groups_is_member($attforsession->groupid, $USER->id)) {
@@ -145,9 +206,6 @@ if (!empty($attforsession->subnet) && !address_in_subnet(getremoteaddr(), $attfo
     notice(get_string('subnetwrong', 'attendance'), $url);
     exit; // Notice calls this anyway.
 }
-
-$pageparams->sessionid = $id;
-$att = new mod_attendance_structure($attendance, $cm, $course, $PAGE->context, $pageparams);
 
 if (empty($attforsession->includeqrcode)) {
     $qrpass = ''; // Override qrpass if set, as it is not allowed.

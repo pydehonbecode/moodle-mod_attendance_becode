@@ -80,7 +80,7 @@ class take_data implements renderable {
         $this->statuses = $att->get_statuses();
 
         $this->sessioninfo = $att->get_session_info($att->pageparams->sessionid);
-        $this->updatemode = $this->sessioninfo->lasttaken > 0;
+        $this->updatemode = 1;#$this->sessioninfo->lasttaken > 0;
 
         if (isset($att->pageparams->copyfrom)) {
             $this->sessionlog = $att->get_session_log($att->pageparams->copyfrom);

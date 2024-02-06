@@ -29,7 +29,6 @@ $PAGE->set_cacheable(true);
 
 $output = $PAGE->get_renderer('mod_attendance');
 echo $output->header();
-echo(var_dump($context));
 
 $mform = new \mod_attendance\form\absencereport(null, array('sessid' => $sessid, 'studentid' => $studentid));
 if ($data = $mform->get_data()) {
@@ -37,7 +36,6 @@ if ($data = $mform->get_data()) {
     #$content = $mform->get_file_content('userfile');
     $fileName = $fileinfo;
     $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
-    #echo(var_dump($fileinfo));
     // Generate a unique identifier
     $uniqueID = uniqid() . time();
     
@@ -55,7 +53,6 @@ if ($data = $mform->get_data()) {
     $targetFilePath = $uploadBaseDir . $safeFileName;
     $result = $mform->save_file('userfile', $targetFilePath, 1);
     $file = $mform->save_stored_file('userfile', $context->id, 'mod_attendance', 'attendance', $itemid, dirname($targetFilePath) . "/" , basename($targetFilePath), 1);
-    echo(var_dump($file));
     // Move the file to the desired directory
     if ($result) {
         // Prepare the record for the database

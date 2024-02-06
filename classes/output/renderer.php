@@ -1458,7 +1458,7 @@ class renderer extends plugin_renderer_base {
                                 array('sessid' => $sess->id, 'sesskey' => sesskey()));
                     $updatelink = "<br>".html_writer::link($url, get_string('updateattendance', 'attendance'));
                 }
-                if (empty($sess->checkout_time) && empty($sess->filepath) && date('d-m-Y', $now) == date('d-m-Y', $sess->sessdate)) {
+                if (empty($sess->checkout_time) && empty($sess->filepath) && date('d-m-Y', $now) == date('d-m-Y', $sess->sessdate) && $sess->checkin_time != 0 ) {
                     $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
                         'sessid' => $sess->id,
                         'sesskey' => sesskey(),

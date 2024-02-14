@@ -52,6 +52,7 @@ if ($action == 'approve') {
     $sessid = required_param('sessid', PARAM_INT); 
     $learnerid = required_param('learnerid', PARAM_INT); 
     $itemid = required_param('itemid', PARAM_INT); 
+    $returnurl = required_param('returnurl', PARAM_ALPHA); 
     $existing = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
     $existing->statusid = 8;
     $existing->remarks = 'Justification approved';
@@ -62,14 +63,18 @@ if ($action == 'approve') {
     $sessioninfo->lasttaken = $now;
     $sessioninfo->lasttakenby = $USER->id;
     $DB->update_record('attendance_sessions', $sessioninfo);
-    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+    if ($returnurl == 'modattendancetakephp') {
+        $redirecturl = new moodle_url('/mod/attendance/take.php', ['id' => $cm->id, 'sessionid' => $sessid, 'grouptype' => '0']);
+    } else if ($returnurl == 'modattendanceviewphp') {
+        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id, 'studentid' => $learnerid]);
+    }
     redirect($redirecturl, "Justification approved!", null);
     exit;
 }
 
 if ($action == 'discart') {
     $context = context_module::instance($cm->id);
-
+    $returnurl = required_param('returnurl', PARAM_ALPHA); 
     $sessid = required_param('sessid', PARAM_INT); 
     $learnerid = required_param('learnerid', PARAM_INT); 
     $itemid = required_param('itemid', PARAM_INT); 
@@ -89,7 +94,11 @@ if ($action == 'discart') {
     $sessioninfo->lasttaken = $now;
     $sessioninfo->lasttakenby = $USER->id;
     $DB->update_record('attendance_sessions', $sessioninfo);
-    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+    if ($returnurl == 'modattendancetakephp') {
+        $redirecturl = new moodle_url('/mod/attendance/take.php', ['id' => $cm->id, 'sessionid' => $sessid, 'grouptype' => '0']);
+    } else if ($returnurl == 'modattendanceviewphp') {
+        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id, 'studentid' => $learnerid]);
+    }
     redirect($redirecturl, "Justification discarted!", null);
     exit;
 }

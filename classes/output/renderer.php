@@ -869,12 +869,14 @@ class renderer extends plugin_renderer_base {
                         'sessid' => $takedata->pageparams->sessionid,
                         'learnerid' => $user->id,
                         'itemid' => $takedata->sessionlog[$user->id]->itemid,
+                        'returnurl' => '/mod/attendance/take.php',
                         'action' => 'approve' // New parameter for checkout action
                     ));
                     $discarturl = new moodle_url('/mod/attendance/attendance.php', array(
                         'sessid' => $takedata->pageparams->sessionid,
                         'learnerid' => $user->id,
                         'itemid' => $takedata->sessionlog[$user->id]->itemid,
+                        'returnurl' => '/mod/attendance/take.php',
                         'action' => 'discart' // New parameter for checkout action
                     ));
                     $approvebutton = html_writer::link($approveurl, get_string('approve', 'attendance'), array('class' => 'btn btn-primary'));
@@ -1367,89 +1369,91 @@ class renderer extends plugin_renderer_base {
         global $USER;
         $context = context_module::instance($userdata->filtercontrols->cm->id);
 
-        $shortform = false;
-        if ($USER->id == $userdata->user->id) {
-            // This is a user viewing their own stuff - hide non-relevant columns.
-            $shortform = true;
-        }
-        $table = new html_table();
-        $table->attributes['class'] = 'generaltable attwidth boxaligncenter';
-        $table->head = array();
-        $table->align = array();
-        $table->size = array();
-        $table->colclasses = array();
-        if (!$shortform) {
-            $table->head[] = get_string('sessiontypeshort', 'attendance');
-            $table->align[] = '';
-            $table->size[] = '1px';
-            $table->colclasses[] = '';
-        }
-        $table->head[] = get_string('date');
-        $table->head[] = get_string('description', 'attendance');
-
-        $table->align = array_merge($table->align, array('', 'left'));
-        $table->colclasses = array_merge($table->colclasses, array('datecol', 'desccol'));
-        $table->size = array_merge($table->size, array('1px', '*'));
-
-        // Add custom fields.
-        $customfields = [];
-        if (!empty($userdata->sessionslog)) {
-            $sessionids = [];
-            foreach ($userdata->sessionslog as $s) {
-                $sessionids[] = $s->id;
+        if (is_enrolled($context, $USER, 'mod/attendance:manageattendances', true)) {
+            $shortform = false;
+            if ($USER->id == $userdata->user->id) {
+                // This is a user viewing their own stuff - hide non-relevant columns.
+                $shortform = true;
             }
-            $handler = \mod_attendance\customfield\session_handler::create();
-            $customfields = $handler->get_fields_for_display(reset($sessionids)); // Pass first sessionid.
-            $customfieldsdata = $handler->get_instances_data($sessionids);
-        }
-        foreach ($customfields as $field) {
-            $table->head[] = $field->get_formatted_name();
-            $table->align[] = '';
-            $table->size[] = '';
-            $table->colclasses[] = 'customfield';
-        }
-        $table->head[] = get_string('status', 'attendance');
-        $table->head[] = get_string('points', 'attendance');
-        $table->head[] = get_string('remarks', 'attendance');
-
-        $table->align = array_merge($table->align, array('center', 'center', 'center'));
-        $table->colclasses = array_merge($table->colclasses, array('statuscol', 'pointscol', 'remarkscol'));
-        $table->size = array_merge($table->size, array('*', '1px', '*'));
-
-        if (has_capability('mod/attendance:takeattendances', $context)) {
-            $table->head[] = get_string('action');
-            $table->align[] = '';
-            $table->size[] = '';
-        }
-
-        $statussetmaxpoints = attendance_get_statusset_maxpoints($userdata->statuses);
-
-        $i = 0;
-        foreach ($userdata->sessionslog as $sess) {
-            $i++;
-
-            $row = new html_table_row();
+            $table = new html_table();
+            $table->attributes['class'] = 'generaltable attwidth boxaligncenter';
+            $table->head = array();
+            $table->align = array();
+            $table->size = array();
+            $table->colclasses = array();
             if (!$shortform) {
-                if ($sess->groupid) {
-                    $sessiontypeshort = get_string('group') . ': ' . $userdata->groups[$sess->groupid]->name;
-                } else {
-                    $sessiontypeshort = get_string('commonsession', 'attendance');
-                }
+                $table->head[] = get_string('sessiontypeshort', 'attendance');
+                $table->align[] = '';
+                $table->size[] = '1px';
+                $table->colclasses[] = '';
+            }
+            $table->head[] = get_string('date');
+            $table->head[] = get_string('description', 'attendance');
 
-                $row->cells[] = html_writer::tag('nobr', $sessiontypeshort);
-            }
-            $row->cells[] = userdate($sess->sessdate, get_string('strftimedmyw', 'attendance')) .
-             " ". $this->construct_time($sess->sessdate, $sess->duration);
-            $row->cells[] = format_text($sess->description);
-            foreach ($customfields as $field) {
-                if (isset($customfieldsdata[$sess->id][$field->get('id')])) {
-                    $row->cells[] = $customfieldsdata[$sess->id][$field->get('id')]->get('value');
-                } else {
-                    $row->cells[] = '';
+            $table->align = array_merge($table->align, array('', 'left'));
+            $table->colclasses = array_merge($table->colclasses, array('datecol', 'desccol'));
+            $table->size = array_merge($table->size, array('1px', '*'));
+
+            // Add custom fields.
+            $customfields = [];
+            if (!empty($userdata->sessionslog)) {
+                $sessionids = [];
+                foreach ($userdata->sessionslog as $s) {
+                    $sessionids[] = $s->id;
                 }
+                $handler = \mod_attendance\customfield\session_handler::create();
+                $customfields = $handler->get_fields_for_display(reset($sessionids)); // Pass first sessionid.
+                $customfieldsdata = $handler->get_instances_data($sessionids);
             }
-            $now = time();
-            if (!empty($sess->statusid)) {
+            foreach ($customfields as $field) {
+                $table->head[] = $field->get_formatted_name();
+                $table->align[] = '';
+                $table->size[] = '';
+                $table->colclasses[] = 'customfield';
+            }
+            $table->head[] = get_string('status', 'attendance');
+            $table->head[] = get_string('points', 'attendance');
+            $table->head[] = get_string('remarks', 'attendance');
+
+            $table->align = array_merge($table->align, array('center', 'center', 'center'));
+            $table->colclasses = array_merge($table->colclasses, array('statuscol', 'pointscol', 'remarkscol'));
+            $table->size = array_merge($table->size, array('*', '1px', '*'));
+
+            if (has_capability('mod/attendance:takeattendances', $context)) {
+                $table->head[] = get_string('action');
+                $table->align[] = '';
+                $table->size[] = '';
+            }
+
+            $statussetmaxpoints = attendance_get_statusset_maxpoints($userdata->statuses);
+
+            $i = 0;
+            foreach ($userdata->sessionslog as $sess) {
+                $i++;
+
+                $row = new html_table_row();
+                if (!$shortform) {
+                    if ($sess->groupid) {
+                        $sessiontypeshort = get_string('group') . ': ' . $userdata->groups[$sess->groupid]->name;
+                    } else {
+                        $sessiontypeshort = get_string('commonsession', 'attendance');
+                    }
+
+                    $row->cells[] = html_writer::tag('nobr', $sessiontypeshort);
+                }
+                $row->cells[] = userdate($sess->sessdate, get_string('strftimedmyw', 'attendance')) .
+                " ". $this->construct_time($sess->sessdate, $sess->duration);
+                $row->cells[] = format_text($sess->description);
+                foreach ($customfields as $field) {
+                    if (isset($customfieldsdata[$sess->id][$field->get('id')])) {
+                        $row->cells[] = $customfieldsdata[$sess->id][$field->get('id')]->get('value');
+                    } else {
+                        $row->cells[] = '';
+                    }
+                }
+                $now = time();
+                //If session contains data (when checkedin or reported as absent)
+
                 $updatelink = '';
                 $status = $userdata->statuses[$sess->statusid];
                 list($canmark, $reason) = attendance_can_student_mark($sess, false);
@@ -1458,109 +1462,268 @@ class renderer extends plugin_renderer_base {
                                 array('sessid' => $sess->id, 'sesskey' => sesskey()));
                     $updatelink = "<br>".html_writer::link($url, get_string('updateattendance', 'attendance'));
                 }
-                if (empty($sess->checkout_time) && empty($sess->filepath) && date('d-m-Y', $now) == date('d-m-Y', $sess->sessdate) && $sess->checkin_time != 0 ) {
+                // If checkedin and no file attached but no date condition so can checkout even if not today
+                if (empty($sess->checkout_time) && empty($sess->filepath) && $sess->checkin_time != 0 ) {
                     $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
                         'sessid' => $sess->id,
-                        'sesskey' => sesskey(),
-                        'action' => 'checkout' // New parameter for checkout action
+                        'learnerid' => $userdata->user->id,
+                        'action' => 'forcecheckout' // New parameter for checkout action
                     ));
-                    $checkoutbutton = html_writer::link($checkouturl, get_string('checkout', 'attendance'), array('class' => 'btn btn-primary'));
+                    $checkoutbutton = html_writer::link($checkouturl, get_string('forcecheckout', 'attendance'), array('class' => 'btn btn-primary'));
                     $row->cells[] = new html_table_cell($checkoutbutton);
-                } else {
-                    $row->cells[] =  get_string('checkedout', 'attendance');
+                } else if (!empty($sess->filepath)) {
+                    if ($sess->approved) {
+                        $fs = get_file_storage();
+                        // Get the file
+                        $files = $fs->get_area_files($context->id, 'mod_attendance', 'attendance', $sess->itemid, null, false);
+                        if (!empty($files)) {
+                            // Get the first file (should only be one)
+                            $file = reset($files);
+                            // Generate a URL for the file
+                            $url = moodle_url::make_pluginfile_url($file->get_contextid(), $file->get_component(), $file->get_filearea(), $file->get_itemid(), $file->get_filepath(), $file->get_filename());
+                            
+                            // Output the URL in your table cell
+                            $row->cells[] = "<a href='$url'> Justified! Download justification </a>";
+                        }
+                        
+                    } else {
+                        
+                        $fs = get_file_storage();
+
+                        // Get the file
+                        $files = $fs->get_area_files($context->id, 'mod_attendance', 'attendance', $sess->itemid, null, false);
+                        if (!empty($files)) {
+                            // Get the first file (should only be one)
+                            $file = reset($files);
+                            // Generate a URL for the file
+                            $url = moodle_url::make_pluginfile_url($file->get_contextid(), $file->get_component(), $file->get_filearea(), $file->get_itemid(), $file->get_filepath(), $file->get_filename());
+                            
+                            // Output the URL in your table cell
+                            $row->cells[] = "<a href='$url'> Download justification </a>";
+                            $approveurl = new moodle_url('/mod/attendance/attendance.php', array(
+                                'sessid' => $sess->id,
+                                'learnerid' => $userdata->user->id,
+                                'itemid' => $sess->itemid,
+                                'returnurl' => '/mod/attendance/view.php',
+                                'action' => 'approve' // New parameter for checkout action
+                            ));
+                            $discarturl = new moodle_url('/mod/attendance/attendance.php', array(
+                                'sessid' => $sess->id,
+                                'learnerid' => $userdata->user->id,
+                                'itemid' => $sess->itemid,
+                                'returnurl' => '/mod/attendance/view.php',
+                                'action' => 'discart' // New parameter for checkout action
+                            ));
+                            $approvebutton = html_writer::link($approveurl, get_string('approve', 'attendance'), array('class' => 'btn btn-primary'));
+                            $row->cells[] = new html_table_cell($approvebutton);
+                            $discartbutton = html_writer::link($discarturl, get_string('discart', 'attendance'), array('class' => 'btn btn-primary'));
+                            $row->cells[] = new html_table_cell($discartbutton);
+                        }
+                    }
                 } 
                 #$row->cells[] = $status->description.$updatelink;
-                $row->cells[] = format_float($status->grade, 1, true, true) . ' / ' .
-                                    format_float($statussetmaxpoints[$status->setnumber], 1, true, true);
+                $row->cells[] = format_float($status->grade, 1, true, true) . ' / ' . format_float($statussetmaxpoints[$status->setnumber], 1, true, true);
                 $row->cells[] = $sess->remarks;
-            } else if (date('d-m-Y',$sess->sessdate) < date('d-m-Y', $now) && date('m', $now) == date('m', $sess->sessdate)) {
-                if($sess->filepath) {  
-                    $row->cells[] = get_string('justifiednotapproved', 'attendance');
-                } else {
-                    $cell = new html_table_cell("");
-                    $cell->colspan = 1;
-                    $row->cells[] = $cell;
-                    $url = new moodle_url('/mod/attendance/absence.php', array(
-                        'sessid' => $sess->id,
-                        'studentid' => $userdata->user->id,
-                        'sesskey' => sesskey(),
-                        'action' => 'absence' // New parameter for checkout action
-                    ));
-                    $absencebutton = html_writer::link($url, get_string('absencepastrereport', 'attendance'), array('class' => 'btn btn-primary'));
-                    $row->cells[] = new html_table_cell($absencebutton);
+
+                $table->data[] = $row;
+            }
+            return html_writer::table($table);
+        } else { 
+            $shortform = false;
+            if ($USER->id == $userdata->user->id) {
+                // This is a user viewing their own stuff - hide non-relevant columns.
+                $shortform = true;
+            }
+            $table = new html_table();
+            $table->attributes['class'] = 'generaltable attwidth boxaligncenter';
+            $table->head = array();
+            $table->align = array();
+            $table->size = array();
+            $table->colclasses = array();
+            if (!$shortform) {
+                $table->head[] = get_string('sessiontypeshort', 'attendance');
+                $table->align[] = '';
+                $table->size[] = '1px';
+                $table->colclasses[] = '';
+            }
+            $table->head[] = get_string('date');
+            $table->head[] = get_string('description', 'attendance');
+
+            $table->align = array_merge($table->align, array('', 'left'));
+            $table->colclasses = array_merge($table->colclasses, array('datecol', 'desccol'));
+            $table->size = array_merge($table->size, array('1px', '*'));
+
+            // Add custom fields.
+            $customfields = [];
+            if (!empty($userdata->sessionslog)) {
+                $sessionids = [];
+                foreach ($userdata->sessionslog as $s) {
+                    $sessionids[] = $s->id;
                 }
-            }  else if (($sess->sessdate + $sess->duration) < $userdata->user->enrolmentstart) {
-                $cell = new html_table_cell(get_string('enrolmentstart', 'attendance',
-                                            userdate($userdata->user->enrolmentstart, '%d.%m.%Y')));
-                $cell->colspan = 3;
-                $row->cells[] = $cell;
-            } else if ($userdata->user->enrolmentend && $sess->sessdate > $userdata->user->enrolmentend) {
-                $cell = new html_table_cell(get_string('enrolmentend', 'attendance',
-                                            userdate($userdata->user->enrolmentend, '%d.%m.%Y')));
-                $cell->colspan = 3;
-                $row->cells[] = $cell;
-            } else {
-                list($canmark, $reason) = attendance_can_student_mark($sess, false);
-                if ($canmark) {
-                    // Student can mark their own attendance.
-                    // URL to the page that lets the student modify their attendance.
-                    $url = new moodle_url('/mod/attendance/attendance.php',
-                            array('sessid' => $sess->id, 'sesskey' => sesskey()));
-                    if (attendance_session_open_for_students($sess)) {
-                        if ($sess->rotateqrcode == 1) {
-                            $url = new moodle_url('/mod/attendance/attendance.php');
-                            $output = html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sessid',
-                                                                       'value' => $sess->id]);
-                            $output .= html_writer::empty_tag('input', ['type' => 'text', 'name' => 'qrpass',
-                                                                        'placeholder' => "Enter password"]);
-                            $output .= html_writer::empty_tag('input', ['type' => 'submit',
-                                                                        'value' => get_string('submit'),
-                                                                        'class' => 'btn btn-secondary']);
-                            $cell = new html_table_cell(html_writer::tag('form', $output,
-                                                                         ['action' => $url->out(), 'method' => 'get']));
-                            $cell->colspan = 3;
-                            $row->cells[] = $cell;
-                        } else if (empty($sess->filepath)){
-                            $checkinbutton = html_writer::link($url, get_string('submitattendance', 'attendance'), array('class' => 'btn btn-primary'));
-                            $cell = new html_table_cell($checkinbutton);
-                            $cell->colspan = 1;
-                            $row->cells[] = $cell;
-                            $url = new moodle_url('/mod/attendance/absence.php', array(
-                                'sessid' => $sess->id,
-                                'studentid' => $userdata->user->id,
-                                'sesskey' => sesskey(),
-                                'action' => 'absence' // New parameter for checkout action
-                            ));
-                            $absencebutton = html_writer::link($url, get_string('absencereport', 'attendance'), array('class' => 'btn btn-primary'));
-                            $row->cells[] = new html_table_cell($absencebutton);                            
-                        }
-                    } else if (empty($sess->filepath)) { // Student cannot mark their own attendace.
-                        $row->cells[] = '?';
+                $handler = \mod_attendance\customfield\session_handler::create();
+                $customfields = $handler->get_fields_for_display(reset($sessionids)); // Pass first sessionid.
+                $customfieldsdata = $handler->get_instances_data($sessionids);
+            }
+            foreach ($customfields as $field) {
+                $table->head[] = $field->get_formatted_name();
+                $table->align[] = '';
+                $table->size[] = '';
+                $table->colclasses[] = 'customfield';
+            }
+            $table->head[] = get_string('status', 'attendance');
+            $table->head[] = get_string('points', 'attendance');
+            $table->head[] = get_string('remarks', 'attendance');
+
+            $table->align = array_merge($table->align, array('center', 'center', 'center'));
+            $table->colclasses = array_merge($table->colclasses, array('statuscol', 'pointscol', 'remarkscol'));
+            $table->size = array_merge($table->size, array('*', '1px', '*'));
+
+            if (has_capability('mod/attendance:takeattendances', $context)) {
+                $table->head[] = get_string('action');
+                $table->align[] = '';
+                $table->size[] = '';
+            }
+
+            $statussetmaxpoints = attendance_get_statusset_maxpoints($userdata->statuses);
+
+            $i = 0;
+            foreach ($userdata->sessionslog as $sess) {
+                $i++;
+
+                $row = new html_table_row();
+                if (!$shortform) {
+                    if ($sess->groupid) {
+                        $sessiontypeshort = get_string('group') . ': ' . $userdata->groups[$sess->groupid]->name;
+                    } else {
+                        $sessiontypeshort = get_string('commonsession', 'attendance');
+                    }
+
+                    $row->cells[] = html_writer::tag('nobr', $sessiontypeshort);
+                }
+                $row->cells[] = userdate($sess->sessdate, get_string('strftimedmyw', 'attendance')) .
+                " ". $this->construct_time($sess->sessdate, $sess->duration);
+                $row->cells[] = format_text($sess->description);
+                foreach ($customfields as $field) {
+                    if (isset($customfieldsdata[$sess->id][$field->get('id')])) {
+                        $row->cells[] = $customfieldsdata[$sess->id][$field->get('id')]->get('value');
+                    } else {
+                        $row->cells[] = '';
+                    }
+                }
+                $now = time();
+                if (!empty($sess->statusid)) {
+                    $updatelink = '';
+                    $status = $userdata->statuses[$sess->statusid];
+                    list($canmark, $reason) = attendance_can_student_mark($sess, false);
+                    if (attendance_check_allow_update($sess->id) && $canmark) {
+                        $url = new moodle_url('/mod/attendance/attendance.php',
+                                    array('sessid' => $sess->id, 'sesskey' => sesskey()));
+                        $updatelink = "<br>".html_writer::link($url, get_string('updateattendance', 'attendance'));
+                    }
+                    if (empty($sess->checkout_time) && empty($sess->filepath) && date('d-m-Y', $now) == date('d-m-Y', $sess->sessdate) && $sess->checkin_time != 0 ) {
+                        $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
+                            'sessid' => $sess->id,
+                            'sesskey' => sesskey(),
+                            'action' => 'checkout' // New parameter for checkout action
+                        ));
+                        $checkoutbutton = html_writer::link($checkouturl, get_string('checkout', 'attendance'), array('class' => 'btn btn-primary'));
+                        $row->cells[] = new html_table_cell($checkoutbutton);
+                    } else {
+                        $row->cells[] =  get_string('checkedout', 'attendance');
+                    } 
+                    #$row->cells[] = $status->description.$updatelink;
+                    $row->cells[] = format_float($status->grade, 1, true, true) . ' / ' .
+                                        format_float($statussetmaxpoints[$status->setnumber], 1, true, true);
+                    $row->cells[] = $sess->remarks;
+                } else if (date('d-m-Y',$sess->sessdate) < date('d-m-Y', $now) && date('m', $now) == date('m', $sess->sessdate)) {
+                    if($sess->filepath) {  
+                        $row->cells[] = get_string('justifiednotapproved', 'attendance');
+                    } else {
+                        $cell = new html_table_cell("");
+                        $cell->colspan = 1;
+                        $row->cells[] = $cell;
                         $url = new moodle_url('/mod/attendance/absence.php', array(
                             'sessid' => $sess->id,
                             'studentid' => $userdata->user->id,
                             'sesskey' => sesskey(),
                             'action' => 'absence' // New parameter for checkout action
                         ));
-                        $absencebutton = html_writer::link($url, get_string('absencefuturereport', 'attendance'), array('class' => 'btn btn-primary'));
-                        $row->cells[] = new html_table_cell($absencebutton); 
+                        $absencebutton = html_writer::link($url, get_string('absencepastrereport', 'attendance'), array('class' => 'btn btn-primary'));
+                        $row->cells[] = new html_table_cell($absencebutton);
                     }
-                } 
-            }
+                }  else if (($sess->sessdate + $sess->duration) < $userdata->user->enrolmentstart) {
+                    $cell = new html_table_cell(get_string('enrolmentstart', 'attendance',
+                                                userdate($userdata->user->enrolmentstart, '%d.%m.%Y')));
+                    $cell->colspan = 3;
+                    $row->cells[] = $cell;
+                } else if ($userdata->user->enrolmentend && $sess->sessdate > $userdata->user->enrolmentend) {
+                    $cell = new html_table_cell(get_string('enrolmentend', 'attendance',
+                                                userdate($userdata->user->enrolmentend, '%d.%m.%Y')));
+                    $cell->colspan = 3;
+                    $row->cells[] = $cell;
+                } else {
+                    list($canmark, $reason) = attendance_can_student_mark($sess, false);
+                    if ($canmark) {
+                        // Student can mark their own attendance.
+                        // URL to the page that lets the student modify their attendance.
+                        $url = new moodle_url('/mod/attendance/attendance.php',
+                                array('sessid' => $sess->id, 'sesskey' => sesskey()));
+                        if (attendance_session_open_for_students($sess)) {
+                            if ($sess->rotateqrcode == 1) {
+                                $url = new moodle_url('/mod/attendance/attendance.php');
+                                $output = html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sessid',
+                                                                        'value' => $sess->id]);
+                                $output .= html_writer::empty_tag('input', ['type' => 'text', 'name' => 'qrpass',
+                                                                            'placeholder' => "Enter password"]);
+                                $output .= html_writer::empty_tag('input', ['type' => 'submit',
+                                                                            'value' => get_string('submit'),
+                                                                            'class' => 'btn btn-secondary']);
+                                $cell = new html_table_cell(html_writer::tag('form', $output,
+                                                                            ['action' => $url->out(), 'method' => 'get']));
+                                $cell->colspan = 3;
+                                $row->cells[] = $cell;
+                            } else if (empty($sess->filepath)){
+                                $checkinbutton = html_writer::link($url, get_string('submitattendance', 'attendance'), array('class' => 'btn btn-primary'));
+                                $cell = new html_table_cell($checkinbutton);
+                                $cell->colspan = 1;
+                                $row->cells[] = $cell;
+                                $url = new moodle_url('/mod/attendance/absence.php', array(
+                                    'sessid' => $sess->id,
+                                    'studentid' => $userdata->user->id,
+                                    'sesskey' => sesskey(),
+                                    'action' => 'absence' // New parameter for checkout action
+                                ));
+                                $absencebutton = html_writer::link($url, get_string('absencereport', 'attendance'), array('class' => 'btn btn-primary'));
+                                $row->cells[] = new html_table_cell($absencebutton);                            
+                            }
+                        } else if (empty($sess->filepath)) { // Student cannot mark their own attendace.
+                            $row->cells[] = '?';
+                            $url = new moodle_url('/mod/attendance/absence.php', array(
+                                'sessid' => $sess->id,
+                                'studentid' => $userdata->user->id,
+                                'sesskey' => sesskey(),
+                                'action' => 'absence' // New parameter for checkout action
+                            ));
+                            $absencebutton = html_writer::link($url, get_string('absencefuturereport', 'attendance'), array('class' => 'btn btn-primary'));
+                            $row->cells[] = new html_table_cell($absencebutton); 
+                        }
+                    } 
+                }
 
-            if (has_capability('mod/attendance:takeattendances', $context)) {
-                $params = array('id' => $userdata->filtercontrols->cm->id,
-                    'sessionid' => $sess->id,
-                    'grouptype' => $sess->groupid);
-                $url = new moodle_url('/mod/attendance/take.php', $params);
-                $icon = $this->output->pix_icon('redo', get_string('changeattendance', 'attendance'), 'attendance');
-                $row->cells[] = html_writer::link($url, $icon);
-            }
+                if (has_capability('mod/attendance:takeattendances', $context)) {
+                    $params = array('id' => $userdata->filtercontrols->cm->id,
+                        'sessionid' => $sess->id,
+                        'grouptype' => $sess->groupid);
+                    $url = new moodle_url('/mod/attendance/take.php', $params);
+                    $icon = $this->output->pix_icon('redo', get_string('changeattendance', 'attendance'), 'attendance');
+                    $row->cells[] = html_writer::link($url, $icon);
+                }
 
-            $table->data[] = $row;
+                $table->data[] = $row;
+            }
+            return html_writer::table($table);
         }
 
-        return html_writer::table($table);
     }
 
     /**
@@ -2152,8 +2315,7 @@ class renderer extends plugin_renderer_base {
                             format_float($statussetmaxpoints[$status->setnumber], 1, true, true);
                         $row->cells[] = $sess->remarks;
                     } else if (($sess->sessdate + $sess->duration) < $userdata->user->enrolmentstart) {
-                        $cell = new html_table_cell("get_string('enrolmentstart', 'attendance',
-                        userdate($userdata->user->enrolmentstart, '%d.%m.%Y'))");
+                        $cell = new html_table_cell(get_string('enrolmentstart', 'attendance', userdate($userdata->user->enrolmentstart, '%d.%m.%Y')));
                         $cell->colspan = 3;
                         $row->cells[] = $cell;
                     } else if ($userdata->user->enrolmentend && $sess->sessdate > $userdata->user->enrolmentend) {

@@ -850,8 +850,8 @@ function xmldb_attendance_upgrade($oldversion=0) {
         // Define the new table absence
         $table = new xmldb_table('attendance_log');
         $filepath = new xmldb_field('filepath', XMLDB_TYPE_CHAR, '255', null, null, null, null);
-        $approved = new xmldb_field('approved', XMLDB_TYPE_BINARY, '1', null, XMLDB_NOTNULL, null, 0);
-        $itemid = new xmldb_field('itemid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $approved = new xmldb_field('approved', XMLDB_TYPE_BINARY, '1', null, XMLDB_NOTNULL, 0, null);
+        $itemid = new xmldb_field('itemid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         // Adding fields to the table absence
         if (!$dbman->field_exists($table, $filepath)) {
             $dbman->add_field($table, $filepath);

@@ -53,12 +53,20 @@ if ($action == 'approve') {
     $learnerid = required_param('learnerid', PARAM_INT); 
     $itemid = required_param('itemid', PARAM_INT); 
     $returnurl = required_param('returnurl', PARAM_ALPHA); 
+    $statuses = $DB->get_records('attendance_statuses', array('attendanceid' => $attendance->id));
+    $excusedStatusId = "";
+    foreach ($statuses as $status) {
+        if ($status->acronym == "E") {
+            $excusedStatusId = $status->id;
+        }
+    }
     $existing = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
-    $existing->statusid = 8;
+    $existing->statusid = $excusedStatusId;
     $existing->remarks = 'Justification approved';
     $existing->approved = 1;
     $DB->update_record('attendance_log', $existing);
     $sessioninfo = $DB->get_record('attendance_sessions', array('id' => $sessid));
+
     $statusset = $sessioninfo->statusset;
     $sessioninfo->lasttaken = $now;
     $sessioninfo->lasttakenby = $USER->id;

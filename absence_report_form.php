@@ -6,7 +6,7 @@ class absencereport extends \moodleform {
         $mform  =& $this->_form;
         $sessid = $this->_customdata['sessid'];
         $studentid = $this->_customdata['studentid'];
-        $mform->addElement('filepicker', 'userfile', get_string('file'), null, array('accepted_types' => '*'));
+        $mform->addElement('filepicker', 'userfile', get_string('file'), null, array('accepted_types' => '*', 'maxbytes' => $maxbytes));
         $mform->addRule('userfile', null, 'required', null, 'client');
         $mform->addElement('hidden', 'sessid', null);
         $mform->setType('sessid', PARAM_INT);

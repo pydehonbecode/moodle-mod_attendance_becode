@@ -780,6 +780,7 @@ class renderer extends plugin_renderer_base {
         $table->head[] = get_string('checkintime', 'attendance');
         $table->head[] = get_string('checkouttime', 'attendance');
         $table->head[] = get_string('location', 'attendance');
+        $table->head[] = get_string('reset', 'attendance');
         $table->align[] = 'center';
         $table->size[] = '20px';
         $table->attributes['class'] = 'generaltable takelist';
@@ -911,6 +912,21 @@ class renderer extends plugin_renderer_base {
                 ]);
                 $row->cells[] = $timeInput;            
                 $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkout_time)) : '';
+                
+                // User session exists
+                if ($checkinTime !== '') {
+                    $resetUrl = new moodle_url('/mod/attendance/attendance.php', array(
+                        'sessid' => $takedata->pageparams->sessionid,
+                        'learnerid' => $user->id,
+                        'action' => 'resetSessionData' // New parameter for resetting a user's session
+                    ));
+                    $resetButton = html_writer::link($resetUrl, get_string('resetsessiondata', 'attendance'), array('class' => 'btn btn-outline-danger'));
+
+                } else {
+                    // default disabled button in case there is no user session
+                    $resetButton = '<button style="cursor: not-allowed;" class="btn btn-outline-danger" disabled>' . get_string('resetsessiondata', 'attendance') . '</button>';
+                }
+
                 if ($takedata->sessionlog[$user->id]->checkout_time != 0) {
                     $timeInput = html_writer::empty_tag('input', [
                         'type' => 'date_time_selector', 
@@ -947,6 +963,8 @@ class renderer extends plugin_renderer_base {
             
                 $locationDropdown .= html_writer::end_tag('select');
                 $row->cells[] = $locationDropdown;
+
+                $row->cells[] = new html_table_cell($resetButton);
             }
             
             

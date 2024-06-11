@@ -699,5 +699,7 @@ $string['justifiednotapproved'] = 'Justified but not approved yet';
 $string['justifiedapproved'] = 'Justified and approved!';
 $string['approve'] = 'Approve justification';
 $string['discart'] = 'Discart justification';
+$string['reset'] = 'Reset Attandance';
+$string['resetsessiondata'] = 'Reset user session';
 $string[''] = '';
 

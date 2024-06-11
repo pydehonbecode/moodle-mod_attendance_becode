@@ -174,7 +174,7 @@ class automark {
             $updated = 0;
 
             foreach ($existinglog as $log) {
-                if (empty($log->statusid)) {
+                if (empty($log->statusid) && empty($log->filepath)) {
                     if ($sessionover || !empty($userfirstaccess[$log->studentid])) {
                         // Status needs updating.
                         if (!empty($userfirstaccess[$log->studentid])) {
@@ -210,6 +210,7 @@ class automark {
                     $newlog->takenby = 0;
                     $newlog->sessionid = $session->id;
                     $newlog->remarks = get_string('autorecorded', 'attendance');
+                    $newlog->approved = 0;
                     $newlog->statusset = implode(',', array_keys( (array)$att->get_statuses()));
                     if (!empty($userfirstaccess[$user->id])) {
                         $newlog->statusid = $att->get_automark_status($userfirstaccess[$user->id], $session->id);

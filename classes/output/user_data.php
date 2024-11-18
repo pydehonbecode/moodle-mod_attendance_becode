@@ -88,7 +88,7 @@ class user_data implements renderable {
         } else if ($this->pageparams->mode == mod_attendance_view_page_params::MODE_ALL_SESSIONS) {
             $this->coursesatts = attendance_get_user_courses_attendances($userid);
             $this->statuses = [];
-            $this->summaries = [];
+            $this->summary = [];
             $this->groups = [];
 
             foreach ($this->coursesatts as $atid => $ca) {
@@ -101,7 +101,7 @@ class user_data implements renderable {
                     $this->coursesatts[$atid]->cmid = $modinfo->instances['attendance'][$ca->attid]->get_course_module_record()->id;
                 }
                 $this->statuses[$ca->attid] = attendance_get_statuses($ca->attid);
-                $this->summaries[$ca->attid] = new mod_attendance_summary($ca->attid, [$userid]);
+                $this->summary[$ca->attid] = new mod_attendance_summary($ca->attid, [$userid]);
 
                 if (!array_key_exists($ca->courseid, $this->groups)) {
                     $this->groups[$ca->courseid] = groups_get_all_groups($ca->courseid);

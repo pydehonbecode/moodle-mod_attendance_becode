@@ -164,6 +164,7 @@ class automark {
                 }
                 if (!empty($newlogs)) {
                     $DB->insert_records('attendance_log', $newlogs);
+                    $donesomething = true;
                 }
             }
 

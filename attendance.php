@@ -162,10 +162,15 @@ if ($action == 'checkout') {
 }
 
 if ($action == 'resetSessionData') {
-    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
-
     $sessid = required_param('sessid', PARAM_INT); 
-    $learnerid = required_param('learnerid', PARAM_INT);
+    $learnerid = required_param('learnerid', PARAM_INT); 
+    $grouptype = required_param('grouptype', PARAM_INT); 
+
+    $redirecturl = new moodle_url('/mod/attendance/take.php', array(
+        'sessionid' => $sessid,
+        'id' => $cm->id,
+        'grouptype' => $grouptype
+    ));
 
     $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
 

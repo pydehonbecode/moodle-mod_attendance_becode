@@ -919,7 +919,9 @@ class renderer extends plugin_renderer_base {
                     $resetUrl = new moodle_url('/mod/attendance/attendance.php', array(
                         'sessid' => $takedata->pageparams->sessionid,
                         'learnerid' => $user->id,
-                        'action' => 'resetSessionData' // New parameter for resetting a user's session
+                        'action' => 'resetSessionData', // New parameter for resetting a user's session
+                        'grouptype' => $takedata->pageparams->grouptype
+
                     ));
                     $resetButton = html_writer::link($resetUrl, get_string('resetsessiondata', 'attendance'), array('class' => 'btn btn-outline-danger'));
 

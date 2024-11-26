@@ -114,6 +114,7 @@ if ($action == 'discart') {
 if ($action == 'forcecheckout') {
     $sessid = required_param('sessid', PARAM_INT); 
     $learnerid = required_param('learnerid', PARAM_INT); 
+    $grouptype = required_param('grouptype', PARAM_INT); 
     
     $now = time();
     $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
@@ -122,12 +123,20 @@ if ($action == 'forcecheckout') {
         $DB->update_record('attendance_log', $existingattendance);
 
         // Redirect after successful checkout
-        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+        $redirecturl = new moodle_url('/mod/attendance/take.php', array(
+            'sessionid' => $sessid,
+            'id' => $cm->id,
+            'grouptype' => $grouptype
+        ));
         redirect($redirecturl, "Successfully Checked out!", null);
         exit;
     } else {
         // Redirect after successful checkout
-        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+        $redirecturl = new moodle_url('/mod/attendance/take.php', array(
+            'sessionid' => $sessid,
+            'id' => $cm->id,
+            'grouptype' => $grouptype
+        ));
         redirect($redirecturl, "The learner didn't checkin yet!", null);
         exit;
     }
@@ -151,6 +160,28 @@ if ($action == 'checkout') {
         redirect($redirecturl, "Not checked in yet", null);
     }
 }
+
+if ($action == 'resetSessionData') {
+    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+
+    $sessid = required_param('sessid', PARAM_INT); 
+    $learnerid = required_param('learnerid', PARAM_INT);
+
+    $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
+
+    if($existingattendance) {
+        $select = 'sessionid = :sessionid AND studentid = :studentid';
+
+        $DB->delete_records_select('attendance_log', $select, array('sessionid' => $sessid, 'studentid' => $learnerid));
+        
+        redirect($redirecturl, "Successfully removed user session!", null);
+        exit;
+    } else {
+        redirect($redirecturl, "No user sessions found!", null);
+        exit;
+    }
+}
+
 // If group mode is set, check if user can access this session.
 if (!empty($attforsession->groupid) && !groups_is_member($attforsession->groupid, $USER->id)) {
     throw new moodle_exception('cannottakethisgroup', 'attendance');

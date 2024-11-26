@@ -720,7 +720,9 @@ class renderer extends plugin_renderer_base {
         if (empty($pref)) {
             $pref = 'unselected';
         }
-        $options = array('all' => get_string('statusall', 'attendance'),
+        $options = array(
+            'all' => get_string('statusall', 'attendance'),
+            'selectedusers' => get_string('statusselectedusers', 'attendance'),
             'unselected' => get_string('statusunselected', 'attendance'));
 
         $select = new \single_select(new \moodle_url('/'), 'setallstatus-select', $options,
@@ -739,9 +741,13 @@ class renderer extends plugin_renderer_base {
     protected function render_attendance_take_list(take_data $takedata) {
         global $CFG;
         $table = new html_table();
+        // $table->head = array(
+        //         $this->construct_fullname_head($takedata)
+        //     );
         $table->head = array(
-                $this->construct_fullname_head($takedata)
-            );
+            html_writer::checkbox('select_all', 1, false, '', array('id' => 'cb_selector')),
+            $this->construct_fullname_head($takedata)
+        );
         $table->align = array('left');
         $table->size = array('');
         $table->wrap[0] = 'nowrap';
@@ -759,27 +765,12 @@ class renderer extends plugin_renderer_base {
                 'title' => get_string('setallstatusesto', 'attendance', $st->description)));
             $table->align[] = 'center';
             $table->size[] = '20px';
-            // JS to select all radios of this status and prevent default behaviour of # link.
-            $this->page->requires->js_amd_inline("
-                require(['jquery'], function($) {
-                    $('#checkstatus".$st->id."').click(function(e) {
-                     if ($('select[name=\"setallstatus-select\"] option:selected').val() == 'all') {
-                            $('#attendancetakeform').find('.st".$st->id."').prop('checked', true);
-                            M.util.set_user_preference('mod_attendance_statusdropdown','all');
-                        }
-                        else {
-                            $('#attendancetakeform').find('input:indeterminate.st".$st->id."').prop('checked', true);
-                            M.util.set_user_preference('mod_attendance_statusdropdown','unselected');
-                        }
-                        e.preventDefault();
-                    });
-                });");
-
         }
         $table->head[] = get_string('remarks', 'attendance');
         $table->head[] = get_string('checkintime', 'attendance');
         $table->head[] = get_string('checkouttime', 'attendance');
         $table->head[] = get_string('location', 'attendance');
+        $table->head[] = get_string('reset', 'attendance');
         $table->align[] = 'center';
         $table->size[] = '20px';
         $table->attributes['class'] = 'generaltable takelist';
@@ -790,9 +781,12 @@ class renderer extends plugin_renderer_base {
         foreach ($extrasearchfields as $field) {
             $row->cells[] = '';
         }
+        $row->cells[] = '';
 
+        // dropdown statusses
         $cell = new html_table_cell(html_writer::div($this->output->render($this->statusdropdown()), 'setallstatuses'));
         $row->cells[] = $cell;
+
         foreach ($takedata->statuses as $st) {
             $attribs = array(
                 'id' => 'radiocheckstatus'.$st->id,
@@ -802,21 +796,26 @@ class renderer extends plugin_renderer_base {
                 'class' => "st{$st->id}",
             );
             $row->cells[] = html_writer::empty_tag('input', $attribs);
-            // Select all radio buttons of the same status.
-            $this->page->requires->js_amd_inline("
-                require(['jquery'], function($) {
-                    $('#radiocheckstatus".$st->id."').click(function(e) {
-                        if ($('select[name=\"setallstatus-select\"] option:selected').val() == 'all') {
-                            $('#attendancetakeform').find('.st".$st->id."').prop('checked', true);
-                            M.util.set_user_preference('mod_attendance_statusdropdown','all');
-                        }
-                        else {
-                            $('#attendancetakeform').find('input:indeterminate.st".$st->id."').prop('checked', true);
-                            M.util.set_user_preference('mod_attendance_statusdropdown','unselected');
-                        }
-                    });
-                });");
         }
+        
+        $date = userdate($takedata->sessioninfo->sessdate, get_string('strftimedate'));
+        $time = attendance_strftimehm($takedata->sessioninfo->sessdate);
+        $dateTimeString = (string) $date . " " . $time;
+
+        $row->cells[] = html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sessTime',
+        'value' => $dateTimeString, 'class' => 'sessionTimeString']);;
+        $row->cells[] = '';
+        $row->cells[] = '';
+
+        $setLocationDropdown = html_writer::start_tag('select', ['name' => 'setalllocations-select']);
+
+        // Determine the selected option based on the location value
+        $setLocationDropdown .= '<option value="null" selected></option>';
+        $setLocationDropdown .= '<option value="oncampus">' . get_string('oncampus', 'attendance') . '</option>';
+        $setLocationDropdown .= '<option value="athome">' . get_string('athome', 'attendance') . '</option>';
+    
+        $setLocationDropdown .= html_writer::end_tag('select');
+        $row->cells[] = $setLocationDropdown;
         $row->cells[] = '';
         $table->data[] = $row;
 
@@ -832,6 +831,9 @@ class renderer extends plugin_renderer_base {
                 $fullname .= html_writer::empty_tag('br');
                 $fullname .= $ucdata['warning'];
             }
+
+            $row->cells[] = html_writer::checkbox("checked_users[$user->id]", 1, false, '', array('id' => 'cb_selector'));
+
             $row->cells[] = $fullname;
             foreach ($extrasearchfields as $field) {
                 $row->cells[] = $user->$field;
@@ -911,6 +913,21 @@ class renderer extends plugin_renderer_base {
                 ]);
                 $row->cells[] = $timeInput;            
                 $checkoutTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkout_time)) : '';
+                
+                // User session exists
+                if ($checkinTime !== '') {
+                    $resetUrl = new moodle_url('/mod/attendance/attendance.php', array(
+                        'sessid' => $takedata->pageparams->sessionid,
+                        'learnerid' => $user->id,
+                        'action' => 'resetSessionData' // New parameter for resetting a user's session
+                    ));
+                    $resetButton = html_writer::link($resetUrl, get_string('resetsessiondata', 'attendance'), array('class' => 'btn btn-outline-danger'));
+
+                } else {
+                    // default disabled button in case there is no user session
+                    $resetButton = '<button style="cursor: not-allowed;" class="btn btn-outline-danger" disabled>' . get_string('resetsessiondata', 'attendance') . '</button>';
+                }
+
                 if ($takedata->sessionlog[$user->id]->checkout_time != 0) {
                     $timeInput = html_writer::empty_tag('input', [
                         'type' => 'date_time_selector', 
@@ -919,10 +936,13 @@ class renderer extends plugin_renderer_base {
                     ]);
                     $row->cells[] = $timeInput;
                 } else {
+                    // made a change
+
                     $checkouturl = new moodle_url('/mod/attendance/attendance.php', array(
                         'sessid' => $takedata->pageparams->sessionid,
                         'learnerid' => $user->id,
-                        'action' => 'forcecheckout' // New parameter for checkout action
+                        'action' => 'forcecheckout', // New parameter for checkout action
+                        'grouptype' => $takedata->pageparams->grouptype
                     ));
                     $checkoutbutton = html_writer::link($checkouturl, get_string('forcecheckout', 'attendance'), array('class' => 'btn btn-primary'));
                     $row->cells[] = new html_table_cell($checkoutbutton);
@@ -947,6 +967,8 @@ class renderer extends plugin_renderer_base {
             
                 $locationDropdown .= html_writer::end_tag('select');
                 $row->cells[] = $locationDropdown;
+
+                $row->cells[] = new html_table_cell($resetButton);
             }
             
             

@@ -742,6 +742,7 @@ class renderer extends plugin_renderer_base {
         global $CFG;
 
         $this->page->requires->js_call_amd('mod_attendance/togglecheckbox', 'init');
+        $this->page->requires->js_call_amd('mod_attendance/bulkstatusupdates', 'init');
         
         $table = new html_table();
         $table->head = array(   

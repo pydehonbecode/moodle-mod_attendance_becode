@@ -926,7 +926,8 @@ class renderer extends plugin_renderer_base {
             } else {
                 $checkinTime = ($takedata->sessionlog[$user->id]->statusid != "") ? date("d-m-Y H:i", str_replace("/","-",$takedata->sessionlog[$user->id]->checkin_time)) : '';
                 $timeInput = html_writer::empty_tag('input', [
-                    'type' => 'date_time_selector', 
+                    'type' => 'date_time_selector',
+                    'class' => 'checkin_time',
                     'name' => 'checkin_time['.$user->id.']', 
                     'value' => $checkinTime
                 ]);

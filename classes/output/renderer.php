@@ -740,8 +740,11 @@ class renderer extends plugin_renderer_base {
      */
     protected function render_attendance_take_list(take_data $takedata) {
         global $CFG;
+
+        $this->page->requires->js_call_amd('mod_attendance/togglecheckbox', 'init');
+        
         $table = new html_table();
-        $table->head = array(
+        $table->head = array(   
             get_string('selectall', 'attendance'),
             $this->construct_fullname_head($takedata)
         );
@@ -776,7 +779,7 @@ class renderer extends plugin_renderer_base {
         $row = new html_table_row();
         $row->attributes['class'] = 'bulkeditrow';
 
-        $row->cells[] = html_writer::checkbox('select_all', 1, false, '', array('id' => 'cb_selector'));
+        $row->cells[] = html_writer::checkbox('select_all', 1, false, '', array('id' => 'cb_selector_all'));
 
         foreach ($extrasearchfields as $field) {
             $row->cells[] = '';

@@ -741,11 +741,8 @@ class renderer extends plugin_renderer_base {
     protected function render_attendance_take_list(take_data $takedata) {
         global $CFG;
         $table = new html_table();
-        // $table->head = array(
-        //         $this->construct_fullname_head($takedata)
-        //     );
         $table->head = array(
-            html_writer::checkbox('select_all', 1, false, '', array('id' => 'cb_selector')),
+            get_string('selectall', 'attendance'),
             $this->construct_fullname_head($takedata)
         );
         $table->align = array('left');
@@ -777,15 +774,15 @@ class renderer extends plugin_renderer_base {
 
         // Show a 'select all' row of radio buttons.
         $row = new html_table_row();
-        $row->attributes['class'] = 'setallstatusesrow';
+        $row->attributes['class'] = 'bulkeditrow';
+
+        $row->cells[] = html_writer::checkbox('select_all', 1, false, '', array('id' => 'cb_selector'));
+
         foreach ($extrasearchfields as $field) {
             $row->cells[] = '';
         }
-        $row->cells[] = '';
 
-        // dropdown statusses
-        $cell = new html_table_cell(html_writer::div($this->output->render($this->statusdropdown()), 'setallstatuses'));
-        $row->cells[] = $cell;
+        $row->cells[] = '';
 
         foreach ($takedata->statuses as $st) {
             $attribs = array(
@@ -797,15 +794,33 @@ class renderer extends plugin_renderer_base {
             );
             $row->cells[] = html_writer::empty_tag('input', $attribs);
         }
+
+        $updateRemarksInput = html_writer::empty_tag('input', [
+            'type' => 'date_time_selector',
+            'id' => 'update_remarks',
+            'name' => 'update_remarks', 
+            'value' => ''
+        ]);
+        $row->cells[] = $updateRemarksInput;
+
+        $updateCheckinTime = html_writer::empty_tag('input', [
+            'type' => 'date_time_selector', 
+            'id' => 'update_checkin_time',
+            'name' => 'update_checkin_time',
+            'value' => ''
+        ]);
+        $row->cells[] = $updateCheckinTime;
         
         $date = userdate($takedata->sessioninfo->sessdate, get_string('strftimedate'));
         $time = attendance_strftimehm($takedata->sessioninfo->sessdate);
         $dateTimeString = (string) $date . " " . $time;
 
-        $row->cells[] = html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sessTime',
-        'value' => $dateTimeString, 'class' => 'sessionTimeString']);;
-        $row->cells[] = '';
-        $row->cells[] = '';
+        $row->cells[] = html_writer::empty_tag('input', [
+            'type' => 'hidden',
+            'name' => 'sessTime',
+            'value' => $dateTimeString,
+            'class' => 'sessionTimeString'
+        ]);
 
         $setLocationDropdown = html_writer::start_tag('select', ['name' => 'setalllocations-select']);
 

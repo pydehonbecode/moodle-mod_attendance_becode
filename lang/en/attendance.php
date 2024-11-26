@@ -83,6 +83,7 @@ $string['automarkingnotavailableyet'] = 'This session is using automarking on se
 $string['automarkuseempty'] = 'Auto-mark status availability handling';
 $string['automarkuseempty_desc'] = 'If ticked, status items that have an empty/unset "available for" setting will be allowed during auto-marking';
 $string['selectactivity'] = 'Select activity';
+$string['selectall'] = 'All';
 $string['automark_help'] = 'Allows marking to be completed automatically.
 If "Yes" students will be automatically marked depending on their first access to the course.
 If "Set unmarked at end of session" any students who have not marked their attendance will be set to the unmarked status selected.';

@@ -17,11 +17,17 @@ define([], function() {
                     September: '09', October: '10', November: '11', December: '12'
                 };
             
-                const [_, hour, minutes, period] = time.match(/(\d{1,2}):(\d{2})(AM|PM)/);
-                const formattedHour = String(period === 'PM' && hour !== '12' ? +hour + 12 : (period === 'AM' && hour === '12' ? 0 : hour)).padStart(2, '0');
-                
-                return `${day.padStart(2, '0')}-${months[monthName]}-${year} ${formattedHour}:${minutes}`;
+                const timeParts = time.match(/(\d{1,2})(?::(\d{2}))?(AM|PM)/);
+                if (!timeParts) throw new Error('Invalid time format');
+            
+                let [_, hour, minutes, period] = timeParts;
+                minutes = minutes || '00';
+                hour = period === 'PM' && hour !== '12' ? +hour + 12 : (period === 'AM' && hour === '12' ? 0 : hour);
+                hour = String(hour).padStart(2, '0');
+            
+                return `${day.padStart(2, '0')}-${months[monthName]}-${year} ${hour}:${minutes}`;
             };
+            
 
             const setStatusToCheckedRows = (classname) => {
                 const remarkUpdateField = updateRow.querySelector('#update_remarks');
@@ -106,4 +112,3 @@ define([], function() {
         }
     };
 });
-

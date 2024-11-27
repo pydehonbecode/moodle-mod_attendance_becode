@@ -26,6 +26,24 @@ defined('MOODLE_INTERNAL') || die();
 require_once(dirname(__FILE__) . '/classes/calendar_helpers.php');
 
 /**
+ * Check if the user is on a mobile device.
+ *
+ * @return bool True if mobile, false otherwise.
+ */
+function attendance_is_mobile_device() {
+    // List of common mobile user agents
+    $mobile_agents = ['iPhone', 'Android', 'iPad', 'iPod', 'webOS', 'BlackBerry', 'Windows Phone'];
+
+    foreach ($mobile_agents as $agent) {
+        if (strpos($_SERVER['HTTP_USER_AGENT'], $agent) !== false) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+/**
  * Returns the information if the module supports a feature
  *
  * @see plugin_supports() in lib/moodlelib.php

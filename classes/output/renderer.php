@@ -826,7 +826,10 @@ class renderer extends plugin_renderer_base {
             'class' => 'sessionTimeString'
         ]);
 
-        $setLocationDropdown = html_writer::start_tag('select', ['name' => 'setalllocations-select']);
+        $setLocationDropdown = html_writer::start_tag('select', array(
+            'name' => 'setalllocations-select',
+            'id' => 'update_locations'
+        ));
 
         // Determine the selected option based on the location value
         $setLocationDropdown .= '<option value="null" selected></option>';
@@ -970,7 +973,10 @@ class renderer extends plugin_renderer_base {
                     $row->cells[] = new html_table_cell($checkoutbutton);
                 }
                 
-                $locationDropdown = html_writer::start_tag('select', ['name' => 'location['.$user->id.']']);
+                $locationDropdown = html_writer::start_tag('select', array(
+                    'name' => 'location['.$user->id.']',
+                    'class' => 'location'
+                ));
 
                 // Determine the selected option based on the location value
                 if ($takedata->sessionlog[$user->id]->location == 'oncampus') {

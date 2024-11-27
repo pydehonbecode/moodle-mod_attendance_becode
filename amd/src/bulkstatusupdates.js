@@ -5,6 +5,7 @@ define([], function() {
             const sessionStatuses = updateRow.querySelectorAll('[id*="radiocheckstatus"]');
             const remarkUpdateField = updateRow.querySelector('#update_remarks');
             const checkinUpdateField = updateRow.querySelector('#update_checkin_time');
+            const locationsUpdateField = updateRow.querySelector('#update_locations');
 
             const formatTime = (sessionTime) => {
                 const [day, monthName, year, time] = sessionTime.split(' ');
@@ -104,6 +105,10 @@ define([], function() {
 
             checkinUpdateField.addEventListener('input', () => {
                 setValuesToCheckedRows(checkinUpdateField.value, '.checkin_time');
+            })
+
+            locationsUpdateField.addEventListener('input', () => {
+                setValuesToCheckedRows(locationsUpdateField.value, '.location');
             })
         }
     };

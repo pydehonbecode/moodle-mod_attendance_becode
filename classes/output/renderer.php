@@ -944,7 +944,6 @@ class renderer extends plugin_renderer_base {
                         'learnerid' => $user->id,
                         'action' => 'resetSessionData', // New parameter for resetting a user's session
                         'grouptype' => $takedata->pageparams->grouptype
-
                     ));
                     $resetButton = html_writer::link($resetUrl, get_string('resetsessiondata', 'attendance'), array('class' => 'btn btn-outline-danger'));
 

@@ -26,42 +26,41 @@ define([], function() {
                 return `${day.padStart(2, '0')}-${months[monthName]}-${year} ${hour}:${minutes}`;
             };
             
-            const setStatusToCheckedRows = (classname) => {
+            const setStatusToCheckedRows = (classname, index) => {
                 const remarkUpdateField = updateRow.querySelector('#update_remarks');
                 const checkinUpdateField = updateRow.querySelector('#update_checkin_time');
 
                 const sessionTime = document.querySelector('.sessionTimeString').value;
 
                 const checkedBoxes = document.querySelectorAll('input#cb_selector:checked');
-                const code =  classname.substring(2)
 
                 checkedBoxes.forEach(checkboxElement => {
                     const parentRow = checkboxElement.parentElement.parentElement;
                     const status = parentRow.querySelector('.' + classname);
 
-                    if (code == 5) {
+                    if (index == 0) {
                         remarkUpdateField.value = "Coach: Updated as present"
                         remarkUpdateField.dispatchEvent(new Event('input'));
 
                         checkinUpdateField.value = formatTime(sessionTime);
                         checkinUpdateField.dispatchEvent(new Event('input'));
                     }
-                    if (code == 6) {
-                        remarkUpdateField.value = "Coach: Updated as Absent"
-                        remarkUpdateField.dispatchEvent(new Event('input'));
-
-                        checkinUpdateField.value = "01-01-1970 01:00";
-                        checkinUpdateField.dispatchEvent(new Event('input'));
-                    }
-                    if (code == 7) {
+                    if (index == 1) {
                         remarkUpdateField.value = "Coach: Updated as Late"
                         remarkUpdateField.dispatchEvent(new Event('input'));
 
                         // no timestamp: late can be any time, 
                         // 15 minutes after start of session
                     }
-                    if (code == 8) {
+                    if (index == 2) {
                         remarkUpdateField.value = "Coach: Updated as Excused";
+                        remarkUpdateField.dispatchEvent(new Event('input'));
+
+                        checkinUpdateField.value = "01-01-1970 01:00";
+                        checkinUpdateField.dispatchEvent(new Event('input'));
+                    }
+                    if (index == 3) {
+                        remarkUpdateField.value = "Coach: Updated as Absent"
                         remarkUpdateField.dispatchEvent(new Event('input'));
 
                         checkinUpdateField.value = "01-01-1970 01:00";
@@ -91,11 +90,11 @@ define([], function() {
                 })
             }
 
-            sessionStatuses.forEach(st => {
+            sessionStatuses.forEach((st, index) => {
                 const classname = st.className;
 
                 st.addEventListener('click', () => {
-                    setStatusToCheckedRows(classname);
+                    setStatusToCheckedRows(classname, index);
                 })
             })
 

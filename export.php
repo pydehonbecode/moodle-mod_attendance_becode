@@ -166,7 +166,8 @@ if ($formdata = $mform->get_data()) {
             profile_load_custom_fields($user);
             $data->table[$i][] = $user->lastname;
             $data->table[$i][] = $user->firstname;
-            $data->table[$i][] = $user->profile_field_NISS['text'];
+            $data->table[$i][] = $user->profile_field_NISS;
+            // $data->table[$i][] = $user->profile_field_NISS['text'];
             if (!empty($groupmode)) {
                 $grouptext = '';
                 $groupsraw = groups_get_all_groups($course->id, $user->id, 0, 'g.name');

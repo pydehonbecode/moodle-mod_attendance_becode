@@ -114,6 +114,7 @@ if ($action == 'discart') {
 if ($action == 'forcecheckout') {
     $sessid = required_param('sessid', PARAM_INT); 
     $learnerid = required_param('learnerid', PARAM_INT); 
+    $grouptype = required_param('grouptype', PARAM_INT); 
     
     $now = time();
     $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
@@ -122,12 +123,20 @@ if ($action == 'forcecheckout') {
         $DB->update_record('attendance_log', $existingattendance);
 
         // Redirect after successful checkout
-        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+        $redirecturl = new moodle_url('/mod/attendance/take.php', array(
+            'sessionid' => $sessid,
+            'id' => $cm->id,
+            'grouptype' => $grouptype
+        ));
         redirect($redirecturl, "Successfully Checked out!", null);
         exit;
     } else {
         // Redirect after successful checkout
-        $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
+        $redirecturl = new moodle_url('/mod/attendance/take.php', array(
+            'sessionid' => $sessid,
+            'id' => $cm->id,
+            'grouptype' => $grouptype
+        ));
         redirect($redirecturl, "The learner didn't checkin yet!", null);
         exit;
     }
@@ -153,10 +162,15 @@ if ($action == 'checkout') {
 }
 
 if ($action == 'resetSessionData') {
-    $redirecturl = new moodle_url('/mod/attendance/view.php', ['id' => $cm->id]);
-
     $sessid = required_param('sessid', PARAM_INT); 
-    $learnerid = required_param('learnerid', PARAM_INT);
+    $learnerid = required_param('learnerid', PARAM_INT); 
+    $grouptype = required_param('grouptype', PARAM_INT); 
+    
+    $redirecturl = new moodle_url('/mod/attendance/take.php', array(
+        'sessionid' => $sessid,
+        'id' => $cm->id,
+        'grouptype' => $grouptype
+    ));
 
     $existingattendance = $DB->get_record('attendance_log', array('sessionid' => $sessid, 'studentid' => $learnerid));
 

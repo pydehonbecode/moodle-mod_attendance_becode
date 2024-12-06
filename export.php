@@ -268,6 +268,3 @@ echo $output->header();
 $mform->display();
 
 echo $OUTPUT->footer();
-
-
-

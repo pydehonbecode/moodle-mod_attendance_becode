@@ -151,11 +151,19 @@ $output = $PAGE->get_renderer('mod_attendance');
 
 echo $output->header();
 // Detect if the user is on a mobile device based on User-Agent.
-function is_mobile() {
-    return preg_match('/Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i', $_SERVER['HTTP_USER_AGENT']);
+// function is_mobile() {
+//     return preg_match('/Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i', $_SERVER['HTTP_USER_AGENT']);
+// }
+
+$isMobile = false;
+
+if (preg_match('/Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i', $_SERVER['HTTP_USER_AGENT']) ||
+    isset($_SERVER['HTTP_X_WAP_PROFILE']) ||
+    strpos($_SERVER['HTTP_ACCEPT'], 'wap') !== false) {
+    $isMobile = true;
 }
 
-if (is_mobile()) {
+if ($isMobile) {
     //handle access denied code
     echo '<div class="alert alert-danger" role="alert">
             <strong>Access Denied:</strong> You can only open this page on Desktop/Laptop.
